@@ -17,11 +17,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # Trusted publishing: npm trusts *this workflow in this repository* over
-      # OIDC, so there is no token to store, rotate or leak, and the artifact
-      # gets a provenance attestation. Configure the publisher on npm first:
-      # https://docs.npmjs.com/trusted-publishers
+      # npm publish is gated on the NPM_PUBLISH repo variable so pre-1.0 tags can
+      # cut a GitHub Release without an npm trusted publisher configured yet. Set
+      # the variable to "true" (repo Settings → Secrets and variables → Actions →
+      # Variables) once the publisher exists: https://docs.npmjs.com/trusted-publishers
       - name: Set up Node.js
+        if: vars.NPM_PUBLISH == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -29,16 +30,20 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Update npm # trusted publishing requires npm >= 11.5.1
+        if: vars.NPM_PUBLISH == 'true'
         run: npm install -g npm@latest
 
       - name: Install dependencies
+        if: vars.NPM_PUBLISH == 'true'
         run: npm ci
 
-      - name: Publish
+      - name: Publish to npm
+        if: vars.NPM_PUBLISH == 'true'
         run: npm publish
 
       # The changelog section for this version becomes the release body,
-      # verbatim — one source of truth for "what changed".
+      # verbatim — one source of truth for "what changed". Idempotent so a
+      # re-run of the same tag updates rather than fails.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -49,5 +54,9 @@ jobs:
             p && /^## \[/ { exit }
             p { print }
           ' CHANGELOG.md)
-          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" \
-            --notes "${notes:-$GITHUB_REF_NAME}"
+          notes="${notes:-$GITHUB_REF_NAME}"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"
+          else
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"
+          fi

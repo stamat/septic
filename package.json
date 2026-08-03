@@ -10,17 +10,31 @@
   "exports": {
     ".": "./lib/server.js"
   },
+  "files": ["lib", "bin", "README.md", "LICENSE"],
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "serve": "node bin/septic.js serve",
-    "test": "node --test"
+    "test": "node --test",
+    "lint": "eslint ."
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",
     "express": "^4.21.0"
   },
+  "devDependencies": {
+    "eslint": "^9.39.3",
+    "neostandard": "^0.13.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stamat/septic.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stamat/septic/issues"
+  },
+  "homepage": "https://github.com/stamat/septic#readme",
   "keywords": ["poops", "backend", "sqlite", "rest", "crud", "config-driven"],
   "license": "MIT",
   "author": "Stamat <@stamat> (http://stamat.info)"

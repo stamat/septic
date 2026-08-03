@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Run the linter in check mode. This is the style authority; CI runs it.
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+npx eslint .

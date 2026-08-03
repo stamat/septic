@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Run septic locally against the bundled example config (example/poops.json).
+
+set -euo pipefail
+cd "$(dirname "$0")/../example"
+
+exec node ../bin/septic.js serve

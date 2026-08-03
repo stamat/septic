@@ -30,11 +30,11 @@ const config = {
 let base, server, db
 const url = (p) => `${base}${p}`
 
-before(async () => {
+before(async() => {
   wipe()
   const built = createServer(config)
   db = built.db
-  await new Promise((res) => { server = built.app.listen(0, res) })
+  await new Promise((resolve) => { server = built.app.listen(0, resolve) })
   base = `http://localhost:${server.address().port}`
 })
 
@@ -49,9 +49,9 @@ async function login() {
   assert.equal(res.status, 200)
   return res.headers.getSetCookie()[0].split(';')[0] // "septic_session=..."
 }
-const authed = async () => ({ 'content-type': 'application/json', cookie: await login() })
+const authed = async() => ({ 'content-type': 'application/json', cookie: await login() })
 
-test('unauthorized write is rejected (401)', async () => {
+test('unauthorized write is rejected (401)', async() => {
   const res = await fetch(url('/api/posts'), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -60,7 +60,7 @@ test('unauthorized write is rejected (401)', async () => {
   assert.equal(res.status, 401)
 })
 
-test('CRUD roundtrip as admin, defaults applied, public read', async () => {
+test('CRUD roundtrip as admin, defaults applied, public read', async() => {
   const h = await authed()
 
   let res = await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'Hello', slug: 'hello', body: 'world' }) })
@@ -87,7 +87,7 @@ test('CRUD roundtrip as admin, defaults applied, public read', async () => {
   assert.equal((await fetch(url(`/api/posts/${post.id}`))).status, 404)
 })
 
-test('validation: bad enum and bad slug → 422', async () => {
+test('validation: bad enum and bad slug → 422', async() => {
   const h = await authed()
   let res = await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'X', slug: 'ok', status: 'nope' }) })
   assert.equal(res.status, 422)
@@ -95,20 +95,20 @@ test('validation: bad enum and bad slug → 422', async () => {
   assert.equal(res.status, 422)
 })
 
-test('missing required field → 422', async () => {
+test('missing required field → 422', async() => {
   const h = await authed()
   const res = await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ slug: 'no-title' }) })
   assert.equal(res.status, 422)
 })
 
-test('unique constraint → 409', async () => {
+test('unique constraint → 409', async() => {
   const h = await authed()
   await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'A', slug: 'dup' }) })
   const res = await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'B', slug: 'dup' }) })
   assert.equal(res.status, 409)
 })
 
-test('read-only resource has no POST route (404)', async () => {
+test('read-only resource has no POST route (404)', async() => {
   const h = await authed()
   const res = await fetch(url('/api/authors'), { method: 'POST', headers: h, body: JSON.stringify({ name: 'X' }) })
   assert.equal(res.status, 404)

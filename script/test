@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+# Run the tests. Exit non-zero on the first thing that is wrong.
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+npm test

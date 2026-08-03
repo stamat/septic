@@ -12,7 +12,21 @@ Write your change under `## [Unreleased]`, grouped under `### Added`,
 Write it for the person upgrading, not the person who wrote the code: a renamed
 option, a different default, an error that is now thrown, output that moved.
 
-## [Unreleased]
+## [Unreleased] — the poops bridge
+
+The same DB that serves the live API now feeds the poops static build. One
+`poops.json`, one dataset, two outputs — this is the thing no other backend does.
+
+### Added
+
+- `septic.build` config block: per-resource `{ into, slug, body, layout }`
+  mapping (where to emit markup inside the poops source tree, and how to map
+  fields).
+- `septic build` CLI: DB rows → `{into}/{slug}.md` (YAML front matter + body),
+  regenerated clean each run, then runs poops if it's installed.
+- `lib/build.js` — `build(config, db, { compile })` and `toMarkup(row, spec)`.
+  poops is an **optional peer**: markup emission never depends on it; compiling
+  is skipped with a note when poops isn't present.
 
 ## [0.1.0] — the spine
 

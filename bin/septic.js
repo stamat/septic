@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { loadConfig } from '../lib/config.js'
-import { createServer } from '../lib/server.js'
+import { createServer, prepareDb } from '../lib/server.js'
 
 const [cmd] = process.argv.slice(2)
 
@@ -10,7 +10,15 @@ if (cmd === 'serve') {
   const port = Number(process.env.PORT) || 3000
   const count = Object.keys(config.resources).length
   app.listen(port, () => console.log(`💩 septic serving ${count} resource(s) on http://localhost:${port}`))
+} else if (cmd === 'build') {
+  const config = loadConfig()
+  const { db } = prepareDb(config)
+  const { build } = await import('../lib/build.js')
+  const { written, compiled } = await build(config, db)
+  db.close()
+  const summary = Object.entries(written).map(([k, v]) => `${v} ${k}`).join(', ') || 'nothing'
+  console.log(`💩 septic wrote ${summary}${compiled ? ' → poops build' : ' (poops not installed — markup only)'}`)
 } else {
-  console.log('Usage: septic serve   (reads ./poops.json)')
+  console.log('Usage: septic <serve|build>   (reads ./poops.json)')
   process.exit(cmd ? 1 : 0)
 }

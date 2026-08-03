@@ -11,6 +11,7 @@ script/bootstrap # install what the project needs, from a fresh clone
 script/server    # run it locally against example/poops.json
 script/test      # run the tests
 script/lint      # run the linter (neostandard; the authority, CI runs it)
+node bin/septic.js build   # DB rows → poops markup → static site (the bridge)
 ```
 
 ## Layout
@@ -55,3 +56,8 @@ script/lint      # run the linter (neostandard; the authority, CI runs it)
   story lands (before v1.0).
 - The session secret is random-per-boot unless `SEPTIC_SECRET` is set — dev
   sessions drop on restart and can't be shared across workers.
+- The build bridge (`lib/build.js`) runs poops as a **child process**
+  (`import.meta.resolve('poops/poops.js')` → `execFile`), never by importing it
+  — that keeps poops's cwd-relative path resolution and any crash isolated.
+  poops is an optional peer; `build({ compile: false })` is the dependency-free
+  path the tests pin.

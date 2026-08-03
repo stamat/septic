@@ -21,6 +21,11 @@
         "access": { "read": "public" },
         "fields": { "name": "string required" }
       }
+    },
+    "build": {
+      "resources": {
+        "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html" }
+      }
     }
   }
 }

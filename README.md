@@ -2,7 +2,7 @@
 
 Config-driven backend for the [poops](https://github.com/stamat/poops) ecosystem. One `poops.json`, a `septic` block → SQLite schema + REST CRUD + auth. The backend twin of the poops frontend. (A septic tank is the backend that stores and processes what poops produces.)
 
-> **v0.1 — the spine.** Config → table → CRUD → validate → auth. Node-native, no dragged binaries. See [`SEPTIC-PLAN.md`](../SEPTIC-PLAN.md) for the roadmap (relations, media, the poops static-site bridge, dogfooding pooppress).
+> **Status.** v0.1 spine (config → table → CRUD → validate → auth) + the poops bridge (`septic build`). Node-native, no dragged binaries. Roadmap: relations, media, dogfooding pooppress.
 
 ## Why it exists
 
@@ -46,8 +46,9 @@ Add a `septic` block to `poops.json`. Presence = instantiation — nothing mount
 
 ```sh
 npm install
-npm run serve          # reads ./poops.json, serves on :3000
-npm test               # the CRUD-roundtrip check
+npm run serve          # reads ./poops.json, serves the API on :3000
+node bin/septic.js build   # DB rows → poops markup → static site
+npm test               # the CRUD + bridge checks
 ```
 
 Generated routes per resource (only the `methods` you list):
@@ -61,6 +62,22 @@ Generated routes per resource (only the `methods` you list):
 | DELETE | `/api/:resource/:id` | `access.write` |
 
 Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"` or a role name; `admin` passes everything.
+
+## The poops bridge
+
+The one thing no other backend does: the same data serves a live API **and** a static site. Add a `build` block, then `septic build`.
+
+```json
+"build": {
+  "resources": {
+    "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html" }
+  }
+}
+```
+
+Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter, the `body` field becomes the document body, `layout` is added if named. The directory is regenerated clean each run (a deleted row leaves no orphan file). Then septic runs [poops](https://github.com/stamat/poops) over the same `poops.json` to compile the site.
+
+poops is an **optional peer** — markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
 
 ---
 

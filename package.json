@@ -1,0 +1,27 @@
+{
+  "name": "septic",
+  "version": "0.1.0",
+  "description": "Config-driven backend for the poops ecosystem: one poops.json, a SQLite schema + REST CRUD + auth.",
+  "type": "module",
+  "bin": {
+    "septic": "bin/septic.js"
+  },
+  "main": "lib/server.js",
+  "exports": {
+    ".": "./lib/server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "serve": "node bin/septic.js serve",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.8.0",
+    "express": "^4.21.0"
+  },
+  "keywords": ["poops", "backend", "sqlite", "rest", "crud", "config-driven"],
+  "license": "MIT",
+  "author": "Stamat <@stamat> (http://stamat.info)"
+}

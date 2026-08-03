@@ -1,0 +1,26 @@
+{
+  "septic": {
+    "db": "data/example.db",
+    "auth": {
+      "seed": { "email": "admin@example.com", "password": "changeme", "role": "admin" }
+    },
+    "resources": {
+      "posts": {
+        "methods": ["GET", "POST", "PUT", "DELETE"],
+        "access": { "read": "public", "write": "admin" },
+        "fields": {
+          "title": "string required",
+          "slug": "slug unique",
+          "body": "text",
+          "status": "enum(draft,review,published) = draft",
+          "created": "datetime = now"
+        }
+      },
+      "authors": {
+        "methods": ["GET"],
+        "access": { "read": "public" },
+        "fields": { "name": "string required" }
+      }
+    }
+  }
+}

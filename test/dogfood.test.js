@@ -34,7 +34,7 @@ const config = {
     posts: {
       access: { read: 'public', write: ['author', 'editor', 'admin'] },
       fieldAccess: { status: { write: ['editor', 'admin'] } },
-      unique: [['collection', 'slug']],
+      unique: [{ columns: ['collection', 'slug'], coalesce: { collection: 0 } }],
       indexes: [['status', 'published_at'], ['collection']],
       fields: {
         collection: 'ref:collections ondelete=restrict',

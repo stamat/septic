@@ -40,13 +40,21 @@ test('image upload → stored file, a path in the row, a resized variant, served
   assert.equal(res.status, 201)
   const row = await res.json()
   assert.equal(row.alt, 'a pixel')
-  assert.match(row.file, /^\/uploads\/[a-f0-9]+\.png$/)
 
-  const name = path.basename(row.file)
+  // image field is a hydrated metadata blob, not just a path
+  assert.equal(typeof row.file, 'object')
+  assert.match(row.file.path, /^\/uploads\/[a-f0-9]+\.png$/)
+  assert.equal(row.file.name, 'pixel.png')
+  assert.equal(row.file.mime, 'image/png')
+  assert.equal(row.file.width, 16)
+  assert.equal(row.file.height, 16)
+  assert.deepEqual(row.file.variants.map((v) => v.width), [8])
+
+  const name = path.basename(row.file.path)
   assert.ok(existsSync(path.join(UP, name)), 'original stored')
   assert.ok(existsSync(path.join(UP, `${name.replace(/\.png$/, '')}-8.png`)), 'variant written')
 
-  const served = await fetch(`${base}${row.file}`)
+  const served = await fetch(`${base}${row.file.path}`)
   assert.equal(served.status, 200) // served statically
 })
 

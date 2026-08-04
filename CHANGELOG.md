@@ -14,6 +14,30 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+## [1.1.0] — the dogfood, for real
+
+Ran septic against pooppress's actual committed migration and closed the two
+semantic gaps the schema-only proof had glossed.
+
+### Added
+
+- **Live dogfood** (`test/dogfood-live.test.js` + `test/fixtures/pooppress-init.sql`):
+  septic stands up pooppress's real migration and serves CRUD, field access,
+  filtering and expand over it — honouring pooppress's own COALESCE slug index
+  and NOT NULL DEFAULT columns, without altering the schema.
+- **COALESCE composite unique.** `unique: [{ columns:["collection","slug"], coalesce:{collection:0} }]`
+  so a nullable column treats NULL as a sentinel — two null-collection pages
+  collide, matching pooppress's `idx_posts_slug`. (Plain `[["a","b"]]` still works.)
+- Media metadata: an `image` field now stores `{ path, name, mime, size, width, height, variants[] }`.
+
+### Changed
+
+- **`image` fields now return a metadata object, not a bare path string.** Read
+  `row.image.path` for the URL. (`file` fields are unchanged — still a path.)
+- Inserts **omit** missing optional fields instead of writing `NULL`, so a
+  column's own `DEFAULT` applies — required for serving tables septic didn't
+  create. No change for septic-created tables (their columns are nullable).
+
 ## [1.0.0] — pooppress fits
 
 The gaps the pooppress dogfood surfaced are closed. pooppress's full schema — all

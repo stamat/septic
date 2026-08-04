@@ -24,11 +24,11 @@ actions and generated forms.
 
 | Gap (was) | Now |
 |-----------|-----|
-| Media | `file`/`image` types, multer upload, sharp variants, static serving |
+| Media | `file`/`image` types, multer upload, sharp variants, static serving. An `image` field stores a metadata blob (`path`, `name`, `mime`, `size`, `width`, `height`, `variants[]`) — covering pooppress's `width`/`height`/`variants` columns in one field |
 | `updated_at` | `= now!` touch fields |
 | Extensible users | a `users` resource ALTERs septic's auth table |
 | FK on-delete | `ref:x ondelete=cascade\|setnull\|restrict` |
-| Composite unique | resource-level `unique: [["collection","slug"]]` |
+| Composite unique | `unique: [["collection","slug"]]`, and the COALESCE form `{ columns:["collection","slug"], coalesce:{collection:0} }` so null-collection pages still collide — exactly what pooppress's `idx_posts_slug` does |
 | `json` type | stored as TEXT, hydrated to object on read |
 | Secondary indexes | resource-level `indexes` |
 | Field-level rules | `fieldAccess: { status: { write: [...] } }` |
@@ -44,6 +44,17 @@ is the correct separation, not a gap:
   application behaviour on top of the data.
 - The **poops build bridge** wiring is septic's `septic build`; pooppress's
   content-specific export shape sits above it.
+
+## Live dogfood — septic on pooppress's real schema
+
+`test/dogfood.test.js` proves the *config* expresses the schema. `test/dogfood-live.test.js` goes further: it stands up pooppress's **committed migration verbatim** (`test/fixtures/pooppress-init.sql`), points septic at that database, and drives real HTTP:
+
+- septic serves CRUD on pooppress's real `posts`/`collections`/`users` without recreating or altering them (the users table keeps `display_name`/`avatar_url`/timestamps);
+- field access holds — an author's `status=published` is stripped and the table's own `DEFAULT 'draft'` applies;
+- pooppress's **COALESCE slug index** rejects a second null-collection page with the same slug (a `409`);
+- `?status=published` filtering and `?expand=author_id` work over the real columns.
+
+**Honest scope.** This proves septic *operates pooppress's real schema* — the data layer. It is **not** a rewrite of pooppress's application code (its routes, admin UI, WXR import, deploy, build scheduler). That code stays in pooppress and calls into septic; rewriting it is pooppress's work, not septic's, and by design (see the refusals in CONTRIBUTING). The 1.0 claim is exactly this: septic can be pooppress's backend, proven against pooppress's own DDL.
 
 ## Why this is 1.0
 

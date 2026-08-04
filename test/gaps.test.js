@@ -86,6 +86,25 @@ test('field-level write access: author cannot publish, admin can', async() => {
   assert.equal(byAdmin.status, 'published')
 })
 
+test('composite unique with coalesce: null-collection pages still collide', () => {
+  wipe()
+  const { db: d } = prepareDb({
+    dbPath: DB,
+    auth: {},
+    resources: {
+      pages: {
+        unique: [{ columns: ['collection', 'slug'], coalesce: { collection: 0 } }],
+        fields: { collection: 'integer', slug: 'slug required' }
+      }
+    }
+  })
+  const ins = d.prepare('INSERT INTO pages (collection, slug) VALUES (?, ?)')
+  ins.run(null, 'about') // first standalone page
+  assert.throws(() => ins.run(null, 'about'), /UNIQUE/) // second, null collection → COALESCE(0) → collides
+  ins.run(1, 'about') // same slug under a real collection is fine
+  d.close(); wipe()
+})
+
 test('secondary index is created', () => {
   const idx = db.prepare("PRAGMA index_list('posts')").all().map((i) => i.name)
   assert.ok(idx.includes('ix_posts_status'))

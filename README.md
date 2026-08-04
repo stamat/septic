@@ -38,9 +38,21 @@ Add a `septic` block to `poops.json`. Presence = instantiation — nothing mount
 
 `"<type>[ flag]... [ = default]"`
 
-- **types:** `string` `text` `slug` `integer` `boolean` `datetime` `enum(a,b,c)` `ref:<resource>`
-- **flags:** `required` `unique`
-- **default:** `= value` (`datetime = now` fills at insert)
+- **types:** `string` `text` `slug` `email` `integer` `boolean` `datetime` `json` `file` `image` `enum(a,b,c)` `ref:<resource>`
+- **flags:** `required` `unique` `ondelete=cascade|setnull|restrict` (ref only)
+- **default:** `= value` — `= now` fills a `datetime` at insert; `= now!` also re-stamps it on every update (an `updated_at`)
+
+Resource-level extras: `unique: [["collection","slug"]]` (composite), `indexes: [["status"]]`, `fieldAccess: { status: { write: ["editor","admin"] } }` (who may set a field). A `users` resource extends septic's built-in auth users table.
+
+### Media
+
+`file` and `image` fields accept multipart uploads. Set `septic.media`:
+
+```json
+"media": { "dir": "data/uploads", "url": "/uploads", "sizes": [400, 800, 1200] }
+```
+
+Uploads are stored under `dir`, served at `url`; each `image` also gets a resized variant per width in `sizes` (via `sharp`, loaded lazily). Forms with a file field switch to `multipart/form-data` automatically.
 
 ## Run
 

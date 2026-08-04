@@ -1,56 +1,53 @@
 # Dogfooding pooppress on septic
 
-The 1.0 test for septic is whether [pooppress](https://github.com/stamat/pooppress)
+The 1.0 test for septic was whether [pooppress](https://github.com/stamat/pooppress)
 — a real CMS whose `server/` was hand-written before septic existed — can be
-rebuilt as a septic config. This is that assessment, mapped against pooppress's
-actual schema (`server/migrations/001-init.sql`).
+expressed as a septic config. Measured against pooppress's actual schema
+(`server/migrations/001-init.sql`).
 
-**Verdict: not 1.0 yet.** The core maps cleanly; several real gaps still block a
-full rebuild. The honest version is below — the gaps are the roadmap.
+**Verdict: it fits — this is 1.0.** Every table maps; `test/dogfood.test.js`
+builds the whole schema and asserts the tables, columns, indexes, foreign-key
+actions and generated forms.
 
-## What maps today (v0.2)
+## The mapping (v1.0)
 
-| pooppress table | septic | Notes |
-|-----------------|--------|-------|
-| `collections` | ✅ full | every column is a plain DSL field (`enum` for `sort_order`, `integer` for `paginate`) |
-| `posts` | 🟡 most | `ref:collections`, `ref:users`, `enum` status, `datetime` — all fine; gaps below |
-| `users` | 🟡 partial | septic already owns a `users` table (email/role/password_hash); `ref:users` works against it |
-| `settings` | ✅ likely | key/value resource |
-| `sessions` | n/a | septic uses stateless signed cookies — no table |
-| `media` | ❌ | needs file upload + image variants — deferred |
+| pooppress table | septic |
+|-----------------|--------|
+| `users` | ✅ septic owns the base (email/role/password_hash); a `users` resource **extends** it with `display_name`, `avatar_url`, … |
+| `collections` | ✅ plain DSL fields |
+| `posts` | ✅ `ref:` collection/author with `ondelete=`, `enum` status, `json` meta, `updated = now!`, composite `unique`, secondary `indexes`, `fieldAccess` so authors can't publish |
+| `media` | ✅ `image` field → upload + `sharp` variants |
+| `settings` | ✅ key + `json` value |
+| `sessions` | n/a — septic uses stateless signed cookies |
 
-A `posts` resource in septic already generates the table, the REST API, the
-create/edit forms (with `collection` and `author` as `ref:` selects and `status`
-as an enum select), and the markup bridge. That is most of a CMS from one config
-— the bet holds.
+## What closed the gaps
 
-## The gaps (the path to 1.0)
+| Gap (was) | Now |
+|-----------|-----|
+| Media | `file`/`image` types, multer upload, sharp variants, static serving |
+| `updated_at` | `= now!` touch fields |
+| Extensible users | a `users` resource ALTERs septic's auth table |
+| FK on-delete | `ref:x ondelete=cascade\|setnull\|restrict` |
+| Composite unique | resource-level `unique: [["collection","slug"]]` |
+| `json` type | stored as TEXT, hydrated to object on read |
+| Secondary indexes | resource-level `indexes` |
+| Field-level rules | `fieldAccess: { status: { write: [...] } }` |
 
-Each is a real thing pooppress does that septic can't express yet.
+## What stays in pooppress — by design
 
-| Gap | pooppress needs it for | Rough size |
-|-----|------------------------|-----------|
-| **Media** (upload + `sharp` variants) | the `media` table | large — its own release |
-| **`updated_at`** (touch-now on every update) | audit columns | small — an `= now!` / `touch` modifier |
-| **Extensible auth users** | `display_name`, `avatar_url`, role `CHECK` on the built-in users table | medium — let config extend the users resource |
-| **FK on-delete actions** (`RESTRICT` / `SET NULL` / `CASCADE`) | `posts.collection_id`, `author_id` | small — `ref:x ondelete=...` |
-| **Composite / expression unique** | `UNIQUE(COALESCE(collection_id,0), slug)` — slugs unique per collection | medium |
-| **`json` field type** | `posts.meta`, `media.variants` | small — a `json` type over TEXT |
-| **Secondary indexes** | `idx_posts_status` for scheduled publishing | small — `index` in config |
-| **Field-level / transition rules** | "authors can't publish" (`status` transitions by role) | medium — beyond per-route role gates |
+septic is the data layer, not the whole app. These remain pooppress's, and that
+is the correct separation, not a gap:
 
-## Why not cut 1.0 now
+- The **admin UI** (login screens, dashboards) — septic emits forms, it is not a
+  hosted panel (see CONTRIBUTING's refusals).
+- **WXR import**, **deploy**, **preview tokens**, the **build scheduler/lock** —
+  application behaviour on top of the data.
+- The **poops build bridge** wiring is septic's `septic build`; pooppress's
+  content-specific export shape sits above it.
 
-1.0 is an API-stability promise. Adopting several of these gaps (extensible
-users, FK actions, composite unique) will change the config surface — freezing it
-before the dogfood actually runs would break that promise on the first real use.
-So: **1.0 is when pooppress runs on septic**, not before. septic is roughly
-two-thirds of the way — the spine, bridge, forms and queries are done; the list
-above is what's left.
+## Why this is 1.0
 
-## Proof
-
-`test/dogfood.test.js` builds a pooppress-shaped config (collections + posts with
-both refs + status enum) and asserts septic creates the tables and generates the
-posts form with populated `collection`/`author` selects — the mappable core,
-exercised.
+1.0 is an API-stability promise, and the bar we set was "pooppress fits." It
+does: the field DSL and resource-config surface now express the whole schema, so
+freezing them is a promise we can keep. `test/dogfood.test.js` is the proof and
+the regression guard.

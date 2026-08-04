@@ -14,14 +14,38 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+## [1.0.0] — pooppress fits
+
+The gaps the pooppress dogfood surfaced are closed. pooppress's full schema — all
+six tables — now expresses as a septic config: `docs/DOGFOOD.md` shows the
+mapping and `test/dogfood.test.js` runs it. That was the bar for 1.0, so this is
+1.0. The config surface (field DSL, resource keys) is now stable.
+
 ### Added
 
-- `docs/DOGFOOD.md` + `test/dogfood.test.js` — the pooppress 1.0 dogfood
-  assessment. The CMS core (collections, posts with both refs, the status enum)
-  maps onto septic and generates its tables + forms today; the gaps that still
-  block a full rebuild (media, `updated_at`, extensible auth users, FK on-delete
-  actions, composite unique, a `json` type, secondary indexes, field-level rules)
-  are enumerated as the road to 1.0. 1.0 ships when pooppress runs on septic.
+- **Media.** `file` and `image` field types. Multipart uploads are stored under
+  `media.dir` and served at `media.url`; images get a resized variant per
+  `media.sizes` width (via `sharp`, loaded lazily and optional). Forms render a
+  file input and switch to `multipart/form-data`.
+- **`json` type.** Stored as TEXT, validated, and hydrated back to an object on
+  read.
+- **Touch fields.** `= now!` re-stamps a datetime on every write (an
+  `updated_at`), where `= now` stamps only at insert.
+- **FK on-delete.** `ref:x ondelete=cascade|setnull|restrict`.
+- **Composite / secondary indexes.** Resource-level `unique: [["a","b"]]`
+  (slug-unique-per-collection) and `indexes: [["status"]]`.
+- **Extensible auth users.** A `users` resource in config adds columns to
+  septic's built-in users table (ALTER), so a project can carry `display_name`,
+  `avatar_url`, etc.
+- **Field-level write access.** `fieldAccess: { status: { write: ["editor"] } }`
+  — an author submitting `status=published` simply can't set it.
+- **Array access rules already**, plus additive `ALTER` on config change (a
+  poor-man's forward migration for added fields).
+
+### Changed
+
+- `access.read`/`write` and `fieldAccess.*.write` accept a role, a list of roles,
+  or `"public"`; `admin` passes everything.
 
 ## [0.2.0] — the poops bridge, working forms, and queries
 

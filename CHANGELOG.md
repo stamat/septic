@@ -14,6 +14,15 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+### Added
+
+- `docs/DOGFOOD.md` + `test/dogfood.test.js` — the pooppress 1.0 dogfood
+  assessment. The CMS core (collections, posts with both refs, the status enum)
+  maps onto septic and generates its tables + forms today; the gaps that still
+  block a full rebuild (media, `updated_at`, extensible auth users, FK on-delete
+  actions, composite unique, a `json` type, secondary indexes, field-level rules)
+  are enumerated as the road to 1.0. 1.0 ships when pooppress runs on septic.
+
 ## [0.2.0] — the poops bridge, working forms, and queries
 
 The same DB that serves the live API now feeds the poops static build, generates

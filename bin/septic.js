@@ -14,10 +14,11 @@ if (cmd === 'serve') {
   const config = loadConfig()
   const { db } = prepareDb(config)
   const { build } = await import('../lib/build.js')
-  const { written, compiled } = await build(config, db)
+  const { written, forms, compiled } = await build(config, db)
   db.close()
-  const summary = Object.entries(written).map(([k, v]) => `${v} ${k}`).join(', ') || 'nothing'
-  console.log(`💩 septic wrote ${summary}${compiled ? ' → poops build' : ' (poops not installed — markup only)'}`)
+  const pages = Object.entries(written).map(([k, v]) => `${v} ${k}`).join(', ') || 'nothing'
+  const formsMsg = forms.length ? `, ${forms.length} form(s)` : ''
+  console.log(`💩 septic wrote ${pages}${formsMsg}${compiled ? ' → poops build' : ' (poops not installed — markup only)'}`)
 } else {
   console.log('Usage: septic <serve|build>   (reads ./poops.json)')
   process.exit(cmd ? 1 : 0)

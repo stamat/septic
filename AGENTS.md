@@ -61,3 +61,11 @@ node bin/septic.js build   # DB rows → poops markup → static site (the bridg
   — that keeps poops's cwd-relative path resolution and any crash isolated.
   poops is an optional peer; `build({ compile: false })` is the dependency-free
   path the tests pin.
+- `formHtml` (`lib/forms.js`) is one renderer used twice: build-time (static
+  partial) and request-time (the CRUD route re-renders it with errors + values
+  on a bad HTML submit). That shared renderer is why the forms work — don't fork
+  it into two.
+- Client validation duplicates no rules: `assets/septic-forms.js` reads the
+  browser's native `ValidityState` from the attributes the DSL already emits.
+  `validate.js` stays the authority; the client is convenience. If you're
+  tempted to add a JS rules engine, you've left the platform — don't.

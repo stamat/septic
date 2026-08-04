@@ -20,11 +20,41 @@
         "methods": ["GET"],
         "access": { "read": "public" },
         "fields": { "name": "string required" }
+      },
+      "messages": {
+        "methods": ["GET", "POST"],
+        "access": { "read": "admin", "write": "public" },
+        "fields": {
+          "name": "string required",
+          "email": "email required",
+          "body": "text required",
+          "created": "datetime = now"
+        }
       }
     },
     "build": {
       "resources": {
         "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html" }
+      },
+      "forms": {
+        "posts": {
+          "into": "src/markup/_partials",
+          "submitLabel": "Publish",
+          "hints": {
+            "body": { "widget": "textarea", "label": "Post body" },
+            "status": { "help": "Draft until an editor publishes" }
+          }
+        },
+        "messages": {
+          "into": "src/markup/_partials",
+          "action": "/api/messages",
+          "success": "/thanks",
+          "submitLabel": "Send",
+          "hints": {
+            "body": { "widget": "textarea", "label": "Message" },
+            "email": { "help": "We'll only use this to reply" }
+          }
+        }
       }
     }
   }

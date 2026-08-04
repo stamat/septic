@@ -79,6 +79,44 @@ Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter
 
 poops is an **optional peer** — markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
 
+## Forms
+
+Add a `build.forms` block and `septic build` emits an HTML `<form>` per resource, from the same field DSL that made the table — wired to that resource's `/api` endpoint.
+
+```json
+"build": {
+  "forms": {
+    "messages": {
+      "into": "src/markup/_partials",
+      "success": "/thanks",
+      "submitLabel": "Send",
+      "hints": {
+        "body":  { "widget": "textarea", "label": "Message" },
+        "email": { "help": "We'll only use this to reply" }
+      }
+    }
+  }
+}
+```
+
+Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:x`→`<select>` from the DB, `email`→`type=email`, `boolean`→checkbox, `integer`→`type=number`. `id` and `datetime = now` fields are omitted (server-owned).
+
+**And they work.** The create route content-negotiates:
+
+| Client | On success | On error |
+|--------|-----------|----------|
+| HTMX (`HX-Request`) | `HX-Redirect` to `success`, or a "Saved" fragment | `422` + the form re-rendered with errors and the values kept |
+| Browser (no JS) | `303` redirect to `success` (Post/Redirect/Get) | `422` + the re-rendered form |
+| API (`Accept: application/json`) | `201` + JSON | `422` + JSON |
+
+### Progressive validation
+
+Native HTML5 validation fires from the emitted attributes (`required`, `pattern`, `type=email/number`) with **no JavaScript**. Include the optional `assets/septic-forms.js` and those same native checks drive styled inline messages in the `.septic-error` slot instead of browser bubbles — no rules are duplicated, it reads the browser's own `ValidityState`. The server (`validate.js`) remains the authority; the client is convenience.
+
+```html
+<script type="module" src="/path/to/septic-forms.js"></script>
+```
+
 ---
 
 Did you figure out yet that I'm a fan of toilet humor?

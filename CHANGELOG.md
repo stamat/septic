@@ -12,10 +12,12 @@ Write your change under `## [Unreleased]`, grouped under `### Added`,
 Write it for the person upgrading, not the person who wrote the code: a renamed
 option, a different default, an error that is now thrown, output that moved.
 
-## [Unreleased] — the poops bridge
+## [Unreleased] — the poops bridge and working forms
 
-The same DB that serves the live API now feeds the poops static build. One
-`poops.json`, one dataset, two outputs — this is the thing no other backend does.
+The same DB that serves the live API now feeds the poops static build, and
+generates the forms that write back to it. One `poops.json`, one dataset — a live
+API, a static site, and the forms in between. This is the thing no other backend
+does.
 
 ### Added
 
@@ -27,6 +29,20 @@ The same DB that serves the live API now feeds the poops static build. One
 - `lib/build.js` — `build(config, db, { compile })` and `toMarkup(row, spec)`.
   poops is an **optional peer**: markup emission never depends on it; compiling
   is skipped with a note when poops isn't present.
+- `build.forms` config: generate an HTML `<form>` per resource from the same
+  field DSL — field types map to inputs (`slug`→pattern, `enum`→select,
+  `ref:`→select from the DB, `email`→`type=email`, …), wired to the resource's
+  `/api` endpoint. Optional per-field `hints` (`label`, `widget`, `help`,
+  `maxlength`, `min`/`max`).
+- **The forms work.** The create route content-negotiates: HTMX/browser submits
+  get HTML back (the form re-rendered with errors + submitted values, or a
+  redirect on success via `HX-Redirect`/303 PRG); API clients still get JSON.
+- New field type `email` (server-validated + native `type=email`).
+- `assets/septic-forms.js` — optional, dependency-free progressive enhancement:
+  turns native `ValidityState` into styled inline messages in the same
+  `.septic-error` slot the server uses, re-enhancing after HTMX swaps. No rules
+  duplicated — everything is read from the browser's native validation. Without
+  it, native HTML5 validation still fires.
 
 ## [0.1.0] — the spine
 

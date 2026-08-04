@@ -43,6 +43,11 @@ does.
   `.septic-error` slot the server uses, re-enhancing after HTMX swaps. No rules
   duplicated — everything is read from the browser's native validation. Without
   it, native HTML5 validation still fires.
+- **Edit forms.** `GET /api/:resource/:id` from a writer wanting HTML returns
+  the row as a prefilled edit form (PUT). Submit via HTMX `hx-put`, or no-JS via
+  POST + a hidden `_method=PUT` the server honours. Editing applies no defaults,
+  so a `datetime = now` (and any server-owned field) survives an edit; clearing
+  a required field still errors.
 
 ## [0.1.0] — the spine
 

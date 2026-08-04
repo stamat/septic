@@ -69,3 +69,9 @@ node bin/septic.js build   # DB rows → poops markup → static site (the bridg
   browser's native `ValidityState` from the attributes the DSL already emits.
   `validate.js` stays the authority; the client is convenience. If you're
   tempted to add a JS rules engine, you've left the platform — don't.
+- Edit vs create validation: `validateAll(..., { insert: false })` applies no
+  defaults, so an edit can't reset a `datetime = now` or blank a server-owned
+  field. Create keeps `insert: true`. Get this wrong and every edit silently
+  stamps `created` to now.
+- No-JS edits reach PUT via a `_method` override middleware in `server.js`
+  (POST + hidden `_method=PUT`). HTMX sends the real verb and skips it.

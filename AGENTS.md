@@ -75,3 +75,6 @@ node bin/septic.js build   # DB rows → poops markup → static site (the bridg
   stamps `created` to now.
 - No-JS edits reach PUT via a `_method` override middleware in `server.js`
   (POST + hidden `_method=PUT`). HTMX sends the real verb and skips it.
+- Every SQL identifier from a query param (filter column, sort column) is checked
+  against the `cols` allow-list in `crud.js` before it touches SQL; values are
+  always bound. Never build a column name from input without that check.

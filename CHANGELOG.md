@@ -12,12 +12,14 @@ Write your change under `## [Unreleased]`, grouped under `### Added`,
 Write it for the person upgrading, not the person who wrote the code: a renamed
 option, a different default, an error that is now thrown, output that moved.
 
-## [Unreleased] — the poops bridge and working forms
+## [Unreleased]
 
-The same DB that serves the live API now feeds the poops static build, and
-generates the forms that write back to it. One `poops.json`, one dataset — a live
-API, a static site, and the forms in between. This is the thing no other backend
-does.
+## [0.2.0] — the poops bridge, working forms, and queries
+
+The same DB that serves the live API now feeds the poops static build, generates
+the forms that write back to it, and answers filtered/sorted/expanded reads. One
+`poops.json`, one dataset — a live API, a static site, and the forms in between.
+This is the thing no other backend does.
 
 ### Added
 
@@ -48,6 +50,13 @@ does.
   POST + a hidden `_method=PUT` the server honours. Editing applies no defaults,
   so a `datetime = now` (and any server-owned field) survives an edit; clearing
   a required field still errors.
+- **List querying.** `?sort=<col>&order=asc|desc` and `?<col>=value` equality
+  filters, over the existing `?limit=/?offset=`. Column names are checked against
+  the schema (no injection); unknown params are ignored, not errors.
+- **Relation expand.** `?expand=<refField>[,...]` inlines a `ref:` field's
+  referenced row in place of its id, on list and single-row reads.
+- **Array access rules.** `access.read`/`write` accept a list of roles
+  (`["editor", "admin"]`), not just one; `admin` still passes everything.
 
 ## [0.1.0] — the spine
 

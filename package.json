@@ -1,6 +1,6 @@
 {
   "name": "septic",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Config-driven backend for the poops ecosystem: one poops.json, a SQLite schema + REST CRUD + auth.",
   "type": "module",
   "bin": {

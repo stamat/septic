@@ -61,7 +61,18 @@ Generated routes per resource (only the `methods` you list):
 | PUT    | `/api/:resource/:id` (partial) | `access.write` |
 | DELETE | `/api/:resource/:id` | `access.write` |
 
-Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"` or a role name; `admin` passes everything.
+Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"`, a role name, or a list of roles (`["editor","admin"]`); `admin` passes everything.
+
+### Querying a list
+
+| Param | Effect |
+|-------|--------|
+| `?limit=&offset=` | paginate (limit capped at 200) |
+| `?sort=<col>&order=asc\|desc` | order by a column (default `id` desc) |
+| `?<col>=value` | equality filter on a real column |
+| `?expand=<refField>[,...]` | inline a `ref:` field's referenced row in place of its id |
+
+Column names are validated against the schema (no injection); unknown params are ignored.
 
 ## The poops bridge
 

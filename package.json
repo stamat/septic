@@ -33,7 +33,8 @@
     "express": "^4.21.0",
     "js-yaml": "^4.1.0",
     "multer": "^2.2.0",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "unknown-keys": "^1.1.0"
   },
   "peerDependencies": {
     "poops": "*"

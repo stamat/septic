@@ -16,6 +16,22 @@ option, a different default, an error that is now thrown, output that moved.
 
 ### Added
 
+- **A misspelt key in the `septic` block is now named when the config loads.**
+  `"methdos"` on a resource was read by nothing: the methods you meant to allow
+  were never allowed, and the first sign was a 404 you did not expect. Every
+  command routes through `loadConfig`, so every command says it:
+
+  ```
+  💩 septic: unknown key "methdos" in septic.resources.posts — ignored. Valid: fields, methods, access, fieldAccess, indexes, unique
+  ```
+
+  Key names only, and only inside the `septic` block — the rest of `poops.json`
+  belongs to Poops and to whoever else shares the file. Resource and field names
+  are yours and are never reported; a typo inside one is. Types still fail where
+  they are read. The walk is
+  [unknown-keys](https://github.com/stamat/unknown-keys), a new dependency with
+  none of its own.
+
 - **A JSON Schema for the `septic` block**, shipped as `schema/septic.schema.json`
   and published at `https://stamat.info/septic/septic.schema.json`. Point
   `$schema` at it and the editor completes and validates the whole block —

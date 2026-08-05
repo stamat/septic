@@ -36,7 +36,15 @@ Add a `septic` block to `poops.json`. Presence = instantiation — nothing mount
 }
 ```
 
-### Editor completion
+### Key checking and editor completion
+
+A misspelt key is not an error. `"methdos"` on a resource is read by nothing, so the methods you meant to allow are simply not allowed, and the first sign is a 404 you did not expect. septic names them when it loads the config, against the schema it ships:
+
+```
+💩 septic: unknown key "methdos" in septic.resources.posts — ignored. Valid: fields, methods, access, fieldAccess, indexes, unique
+```
+
+Key names only, and only inside the `septic` block — the rest of `poops.json` belongs to Poops and to whoever else shares the file. Resource and field names are yours, so they are never reported; a typo *inside* one is. Types are not checked: `"db": 7` reaches the code that reads it and fails there, loudly.
 
 A field spec is a string, so nothing in JSON can tell `"string required"` from `"strng requried"` — and septic only finds out at boot, if it gets that far. Point `$schema` at the shipped [JSON Schema](https://json-schema.org) and the editor completes and checks the whole block as you type, the DSL included:
 

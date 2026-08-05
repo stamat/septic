@@ -31,8 +31,8 @@
         "branch": "main",
         "lang": "en",
         "links": [
-          { "title": "GitHub", "url": "https://github.com/stamat/septic" },
-          { "title": "laxative", "url": "https://github.com/stamat/laxative" }
+          { "title": "poops", "url": "https://stamat.info/poops" },
+          { "title": "laxative", "url": "https://stamat.info/laxative" }
         ],
         "iconLinks": [
           { "title": "GitHub", "url": "https://github.com/stamat/septic", "icon": "github" }

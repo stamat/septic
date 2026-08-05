@@ -3,10 +3,18 @@
     "in": "node_modules/poops-docs-theme/scss/docs.scss",
     "out": "docs/dist/css/docs.css",
     "options": { "minify": true, "justMinified": true }
+  }, {
+    "in": "node_modules/poops-docs-theme/scss/prose-only.scss",
+    "out": "docs/dist/css/prose.css",
+    "options": { "minify": true, "justMinified": true }
   }],
   "scripts": [{
     "in": "node_modules/poops-docs-theme/src/docs.ts",
     "out": "docs/dist/js/docs.js",
+    "options": { "minify": true, "justMinified": true, "format": "iife", "target": "es2019" }
+  }, {
+    "in": "node_modules/poops-docs-theme/src/prose.ts",
+    "out": "docs/dist/js/prose.js",
     "options": { "minify": true, "justMinified": true, "format": "iife", "target": "es2019" }
   }],
   "markup": {

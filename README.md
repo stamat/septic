@@ -2,7 +2,7 @@
 
 Config-driven backend for the [poops](https://github.com/stamat/poops) ecosystem. One `poops.json`, a `septic` block → SQLite schema + REST CRUD + auth. The backend twin of the poops frontend. (A septic tank is the backend that stores and processes what poops produces.)
 
-> **Status.** v1.3.0 — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. **Not on npm yet**: tags cut a GitHub Release, and publishing waits on an npm trusted publisher — install from git until then. No realtime, no admin UI, no plugin system; [CONTRIBUTING.md](CONTRIBUTING.md) says why. Full reference: [stamat.info/septic](https://stamat.info/septic/).
+> **Status.** v1.0.0 — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. **Not on npm yet**: tags cut a GitHub Release, and publishing waits on an npm trusted publisher — install from git until then. No migrations, no realtime, no admin UI, no plugin system; [CHANGELOG.md](CHANGELOG.md) lists the limits, [CONTRIBUTING.md](CONTRIBUTING.md) says which of them are refusals. Full reference: [stamat.info/septic](https://stamat.info/septic/).
 
 ## Why it exists
 

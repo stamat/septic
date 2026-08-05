@@ -14,171 +14,89 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
-### Added
+## [1.0.0] — one config, a backend
 
-- Docs site (`docs/`, built with poops + poops-docs-theme), deployed to GitHub
-  Pages via `.github/workflows/pages.yml`. `npm run docs:serve` to preview.
-  Now with How-to guides (a todo manager, a blog).
-- The public API shipped in 1.2.0 is documented at last: a table of every export
-  and what it returns in the docs Overview, and a mount example in the README.
-- The docs now place septic in the ecosystem instead of describing it alone: an
-  organ table on the Overview (poops compiles, septic serves, laxative runs both
-  on one origin), a "Where they meet: one origin" section on the Forms page
-  saying plainly that `septic serve` never serves the built site, a Next list
-  closing the Quick start, and a scope line opening each How-to so the split
-  from laxative's full-stack versions is clear before you start, not after.
+The first release. Everything below was built and tagged across a run of 0.x and
+1.x tags that never reached a registry; those tags and their releases are gone,
+and this is the version anyone installing septic gets. Nothing was removed to
+make it — the collapse is bookkeeping, not a rewrite.
 
-### Fixed
-
-- Every link into laxative's docs 404'd — those pages answer without a trailing
-  slash (`/laxative/docs/howto-todo`, not `…/howto-todo/`).
-
-- The README claimed v0.1 and listed relations, media and the pooppress dogfood
-  as roadmap — all three shipped in 1.0–1.1. It now states the version, what is
-  in, and that septic is **not on npm yet**: install is `npm i stamat/septic`
-  from git until an npm trusted publisher exists. The docs Overview said
-  `npm i septic`, which 404s; corrected the same way.
-- `build.resources.<name>.where` (1.3.0) had reached only the blog How-to. It is
-  now in the README's bridge section and on the reference page that covers the
-  bridge.
-
-## [1.3.0] — filter the bridge
+The bar for calling it 1.0 was the dogfood: septic had to be able to serve
+[pooppress](https://github.com/stamat/pooppress)'s real schema — a CMS backend
+hand-written before septic existed. It can, against pooppress's own committed
+migration, which is what `test/dogfood-live.test.js` runs.
 
 ### Added
 
-- `build.resources.<name>.where` — an equality filter on the poops bridge, so a
-  blog can emit only published posts (`"where": { "status": "published" }`) and
-  keep drafts out of the static site.
+- **The `septic` block in `poops.json`.** `db`, `resources`, per-resource
+  `methods` and `access`, `auth.seed`, `media`, `build`. Presence is
+  instantiation, à la carte like poops — nothing mounts unless declared, and the
+  config file is the one poops already reads.
+- **The field DSL** (`lib/schema.js`): `string` `text` `slug` `email` `integer`
+  `boolean` `datetime` `json` `file` `image` `enum(a,b,c)` `ref:<resource>`;
+  flags `required`, `unique`, `ondelete=cascade|setnull|restrict`; defaults via
+  `= value`, with `= now` stamping a datetime at insert and `= now!` re-stamping
+  it on every update. The parsed descriptor is the single source of truth that
+  both table creation and validation read.
+- **Auto REST CRUD** per resource, only for the `methods` listed, gated by
+  `access` — `"public"`, a role, or a list of roles, with `admin` passing
+  everything. `fieldAccess` narrows a single field, so an author submitting
+  `status=published` simply cannot set it.
+- **Validation mapped to HTTP**: type, enum, slug, email and required failures
+  are `422`; a unique collision is `409`; a missing foreign key is `422`.
+- **Auth**: scrypt password hashing and a stateless HMAC-signed session cookie,
+  `POST /api/_auth/login` and `/logout`. A `users` resource in config extends
+  septic's own users table rather than colliding with it.
+- **List querying**: `?limit=&offset=` (capped at 200), `?sort=&order=`,
+  `?<col>=value` equality filters, and `?expand=<refField>` to inline a `ref:`
+  row in place of its id. Column names are checked against the schema, so no
+  query parameter reaches SQL as an identifier; unknown ones are ignored.
+- **Schema shapes a real CMS needed**: composite `unique`, its COALESCE form
+  (`{ columns, coalesce }`) so a nullable column treats NULL as a sentinel,
+  secondary `indexes`, `json` columns hydrated on read, and additive `ALTER` for
+  fields added to an existing config.
+- **Media**: `file` and `image` fields take multipart uploads, stored under
+  `media.dir` and served at `media.url`, with a resized variant per `media.sizes`
+  width via `sharp` — lazily loaded and optional. An `image` field stores
+  `{ path, name, mime, size, width, height, variants[] }`.
+- **The poops bridge**: `septic build` turns rows into `{into}/{slug}.md` (YAML
+  front matter plus the body field), regenerated clean so a deleted row leaves no
+  orphan, then runs poops over the same `poops.json`. `where` filters which rows
+  are emitted, so a blog's drafts stay out of the static site while the API keeps
+  serving them. poops is an optional peer: markup is always written, compiling is
+  skipped with a note when poops is absent.
+- **Forms that work**, generated from the same field DSL that made the table and
+  wired to the resource's own endpoint. The routes content-negotiate: HTMX gets
+  `HX-Redirect` or the form re-rendered with errors and values kept, a browser
+  gets 303 Post/Redirect/Get, an API client gets JSON — all `422` on failure.
+  `GET /api/:resource/:id` as a writer wanting HTML returns a prefilled edit
+  form, submitting via `hx-put` or a hidden `_method=PUT`, and applies no
+  defaults so server-owned fields survive an edit.
+- **Progressive validation**: native HTML5 attributes are emitted, so validation
+  fires with no JavaScript. The optional `assets/septic-forms.js` reads the
+  browser's own `ValidityState` into styled inline messages — no rules
+  duplicated, and `validate.js` remains the authority.
+- **A public API** (`lib/index.js`): `createServer`, `prepareDb`, `loadConfig`,
+  `build`, `toMarkup`, `emitForms`, `formHtml`, `parseResource(s)`, `openDb` —
+  the surface [laxative](https://github.com/stamat/laxative) composes, so no tool
+  has to reach into `lib/*` paths.
+- **The dogfood tests**: `test/dogfood.test.js` builds pooppress's six-table
+  schema from config and asserts columns, indexes, FK actions and forms;
+  `test/dogfood-live.test.js` stands up pooppress's committed migration verbatim
+  and serves CRUD, field access, filtering and expand over it without altering
+  it. `docs/DOGFOOD.md` maps the two.
+- **The documentation site** at [stamat.info/septic](https://stamat.info/septic/),
+  built with poops and poops-docs-theme, with a reference, two how-tos and the
+  dogfood write-up.
 
-## [1.2.0] — a public API
+### Known limits
 
-### Added
-
-- A barrel entry (`lib/index.js`) exports the composable surface —
-  `createServer`, `prepareDb`, `loadConfig`, `build`, `emitForms`, `formHtml`,
-  `parseResource(s)`, `openDb` — so other tools (laxative) build on septic
-  without reaching into `lib/*` paths. `main`/`exports` now point at it.
-
-## [1.1.0] — the dogfood, for real
-
-Ran septic against pooppress's actual committed migration and closed the two
-semantic gaps the schema-only proof had glossed.
-
-### Added
-
-- **Live dogfood** (`test/dogfood-live.test.js` + `test/fixtures/pooppress-init.sql`):
-  septic stands up pooppress's real migration and serves CRUD, field access,
-  filtering and expand over it — honouring pooppress's own COALESCE slug index
-  and NOT NULL DEFAULT columns, without altering the schema.
-- **COALESCE composite unique.** `unique: [{ columns:["collection","slug"], coalesce:{collection:0} }]`
-  so a nullable column treats NULL as a sentinel — two null-collection pages
-  collide, matching pooppress's `idx_posts_slug`. (Plain `[["a","b"]]` still works.)
-- Media metadata: an `image` field now stores `{ path, name, mime, size, width, height, variants[] }`.
-
-### Changed
-
-- **`image` fields now return a metadata object, not a bare path string.** Read
-  `row.image.path` for the URL. (`file` fields are unchanged — still a path.)
-- Inserts **omit** missing optional fields instead of writing `NULL`, so a
-  column's own `DEFAULT` applies — required for serving tables septic didn't
-  create. No change for septic-created tables (their columns are nullable).
-
-## [1.0.0] — pooppress fits
-
-The gaps the pooppress dogfood surfaced are closed. pooppress's full schema — all
-six tables — now expresses as a septic config: `docs/DOGFOOD.md` shows the
-mapping and `test/dogfood.test.js` runs it. That was the bar for 1.0, so this is
-1.0. The config surface (field DSL, resource keys) is now stable.
-
-### Added
-
-- **Media.** `file` and `image` field types. Multipart uploads are stored under
-  `media.dir` and served at `media.url`; images get a resized variant per
-  `media.sizes` width (via `sharp`, loaded lazily and optional). Forms render a
-  file input and switch to `multipart/form-data`.
-- **`json` type.** Stored as TEXT, validated, and hydrated back to an object on
-  read.
-- **Touch fields.** `= now!` re-stamps a datetime on every write (an
-  `updated_at`), where `= now` stamps only at insert.
-- **FK on-delete.** `ref:x ondelete=cascade|setnull|restrict`.
-- **Composite / secondary indexes.** Resource-level `unique: [["a","b"]]`
-  (slug-unique-per-collection) and `indexes: [["status"]]`.
-- **Extensible auth users.** A `users` resource in config adds columns to
-  septic's built-in users table (ALTER), so a project can carry `display_name`,
-  `avatar_url`, etc.
-- **Field-level write access.** `fieldAccess: { status: { write: ["editor"] } }`
-  — an author submitting `status=published` simply can't set it.
-- **Array access rules already**, plus additive `ALTER` on config change (a
-  poor-man's forward migration for added fields).
-
-### Changed
-
-- `access.read`/`write` and `fieldAccess.*.write` accept a role, a list of roles,
-  or `"public"`; `admin` passes everything.
-
-## [0.2.0] — the poops bridge, working forms, and queries
-
-The same DB that serves the live API now feeds the poops static build, generates
-the forms that write back to it, and answers filtered/sorted/expanded reads. One
-`poops.json`, one dataset — a live API, a static site, and the forms in between.
-This is the thing no other backend does.
-
-### Added
-
-- `septic.build` config block: per-resource `{ into, slug, body, layout }`
-  mapping (where to emit markup inside the poops source tree, and how to map
-  fields).
-- `septic build` CLI: DB rows → `{into}/{slug}.md` (YAML front matter + body),
-  regenerated clean each run, then runs poops if it's installed.
-- `lib/build.js` — `build(config, db, { compile })` and `toMarkup(row, spec)`.
-  poops is an **optional peer**: markup emission never depends on it; compiling
-  is skipped with a note when poops isn't present.
-- `build.forms` config: generate an HTML `<form>` per resource from the same
-  field DSL — field types map to inputs (`slug`→pattern, `enum`→select,
-  `ref:`→select from the DB, `email`→`type=email`, …), wired to the resource's
-  `/api` endpoint. Optional per-field `hints` (`label`, `widget`, `help`,
-  `maxlength`, `min`/`max`).
-- **The forms work.** The create route content-negotiates: HTMX/browser submits
-  get HTML back (the form re-rendered with errors + submitted values, or a
-  redirect on success via `HX-Redirect`/303 PRG); API clients still get JSON.
-- New field type `email` (server-validated + native `type=email`).
-- `assets/septic-forms.js` — optional, dependency-free progressive enhancement:
-  turns native `ValidityState` into styled inline messages in the same
-  `.septic-error` slot the server uses, re-enhancing after HTMX swaps. No rules
-  duplicated — everything is read from the browser's native validation. Without
-  it, native HTML5 validation still fires.
-- **Edit forms.** `GET /api/:resource/:id` from a writer wanting HTML returns
-  the row as a prefilled edit form (PUT). Submit via HTMX `hx-put`, or no-JS via
-  POST + a hidden `_method=PUT` the server honours. Editing applies no defaults,
-  so a `datetime = now` (and any server-owned field) survives an edit; clearing
-  a required field still errors.
-- **List querying.** `?sort=<col>&order=asc|desc` and `?<col>=value` equality
-  filters, over the existing `?limit=/?offset=`. Column names are checked against
-  the schema (no injection); unknown params are ignored, not errors.
-- **Relation expand.** `?expand=<refField>[,...]` inlines a `ref:` field's
-  referenced row in place of its id, on list and single-row reads.
-- **Array access rules.** `access.read`/`write` accept a list of roles
-  (`["editor", "admin"]`), not just one; `admin` still passes everything.
-
-## [0.1.0] — the spine
-
-First cut: `poops.json` config → SQLite schema → REST CRUD → validation → auth.
-Node-native, no dragged binaries.
-
-### Added
-
-- `septic` block in `poops.json`: `db` path, `resources`, per-resource
-  `methods` and `access`, and `auth.seed`. Presence = instantiation, à la carte
-  like poops — nothing mounts unless declared.
-- Field DSL (`lib/schema.js`): `string`, `text`, `slug`, `integer`, `boolean`,
-  `datetime`, `enum(a,b,c)`, `ref:<resource>`; flags `required` / `unique`;
-  `= default` (`datetime = now` fills at insert). The parsed descriptor is the
-  single source of truth for both table creation and validation.
-- Auto REST CRUD per resource, only for the listed `methods`; list pagination
-  via `?limit=` / `?offset=`.
-- Validation → HTTP: type/enum/slug/required failures `422`, unique `409`,
-  missing FK `422`.
-- Auth: scrypt password hashing + HMAC-signed session cookie; access rules are
-  `"public"` or a role name, `admin` passes everything.
-- `septic serve` CLI and `createServer(config)` for embedding and tests.
-- One runnable CRUD-roundtrip check (`test/crud.test.js`, `node --test`).
+- **Not on npm.** Install is `npm i stamat/septic` from git; publishing waits on
+  an npm trusted publisher, and `publish.yml` stays gated on the `NPM_PUBLISH`
+  repository variable until then.
+- **No migrations.** Schema creation is declarative `CREATE TABLE IF NOT EXISTS`
+  plus additive `ALTER` for new fields; changing an existing column's type or
+  constraints on a populated table is not handled.
+- **No realtime, no admin UI, no plugin system** — see
+  [CONTRIBUTING.md](CONTRIBUTING.md) for why those are refusals rather than
+  roadmap.

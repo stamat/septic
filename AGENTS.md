@@ -51,9 +51,10 @@ node bin/septic.js build   # DB rows → poops markup → static site (the bridg
   creation and validation ever disagree about a field, that is the bug.
 - scrypt needs `maxmem: 256 * 1024 * 1024` — N=32768×r=8 blows the 32 MB
   default and throws `ERR_CRYPTO_INVALID_SCRYPT_PARAMS`. See `lib/auth.js`.
-- Schema is declarative `CREATE TABLE IF NOT EXISTS` (dev). No migrations yet,
-  so changing a field on an existing table won't apply until the migration
-  story lands (before v1.0).
+- Schema is declarative `CREATE TABLE IF NOT EXISTS` plus additive `ALTER` for
+  fields added to the config. Changing an existing column's type or constraints
+  on a populated table is **not** handled — 1.0 shipped without a migration
+  story, and CHANGELOG.md names it as a known limit.
 - The session secret is random-per-boot unless `SEPTIC_SECRET` is set — dev
   sessions drop on restart and can't be shared across workers.
 - The build bridge (`lib/build.js`) runs poops as a **child process**

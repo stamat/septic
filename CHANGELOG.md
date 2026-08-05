@@ -18,6 +18,15 @@ option, a different default, an error that is now thrown, output that moved.
 
 - Docs site (`docs/`, built with poops + poops-docs-theme), deployed to GitHub
   Pages via `.github/workflows/pages.yml`. `npm run docs:serve` to preview.
+  Now with How-to guides (a todo manager, a blog).
+
+## [1.3.0] — filter the bridge
+
+### Added
+
+- `build.resources.<name>.where` — an equality filter on the poops bridge, so a
+  blog can emit only published posts (`"where": { "status": "published" }`) and
+  keep drafts out of the static site.
 
 ## [1.2.0] — a public API
 

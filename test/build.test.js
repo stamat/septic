@@ -76,3 +76,23 @@ test('build regenerates clean — deleted rows leave no orphan files', async() =
   assert.equal(existsSync(path.join(dir, 'second.md')), false)
   assert.deepEqual(readdirSync(dir), ['hello-world.md'])
 })
+
+test('build "where" filter emits only matching rows (drafts stay out)', async() => {
+  const ROOT2 = new URL('./tmp-where/', import.meta.url).pathname
+  rmSync(ROOT2, { recursive: true, force: true })
+  const cfg = {
+    root: ROOT2,
+    dbPath: path.join(ROOT2, 'w.db'),
+    auth: {},
+    resources: { posts: config.resources.posts },
+    build: { resources: { posts: { into: 'out', slug: 'slug', body: 'body', where: { status: 'published' } } } }
+  }
+  const { db: d } = prepareDb(cfg)
+  d.prepare('INSERT INTO posts (title, slug, body, status) VALUES (?, ?, ?, ?)').run('Pub', 'pub', 'x', 'published')
+  d.prepare('INSERT INTO posts (title, slug, body, status) VALUES (?, ?, ?, ?)').run('Draft', 'draft', 'x', 'draft')
+  await build(cfg, d, { compile: false })
+  const files = readdirSync(path.join(ROOT2, 'out')).sort()
+  d.close()
+  assert.deepEqual(files, ['pub.md']) // draft not emitted
+  rmSync(ROOT2, { recursive: true, force: true })
+})

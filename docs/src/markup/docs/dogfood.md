@@ -2,7 +2,7 @@
 layout: poops-docs-theme/docs
 title: Dogfood
 description: septic runs pooppress's real schema.
-order: 5
+order: 6
 ---
 
 # Dogfood

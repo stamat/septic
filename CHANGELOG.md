@@ -14,6 +14,15 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+## [1.2.0] — a public API
+
+### Added
+
+- A barrel entry (`lib/index.js`) exports the composable surface —
+  `createServer`, `prepareDb`, `loadConfig`, `build`, `emitForms`, `formHtml`,
+  `parseResource(s)`, `openDb` — so other tools (laxative) build on septic
+  without reaching into `lib/*` paths. `main`/`exports` now point at it.
+
 ## [1.1.0] — the dogfood, for real
 
 Ran septic against pooppress's actual committed migration and closed the two

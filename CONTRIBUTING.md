@@ -5,7 +5,7 @@ Issues and pull requests are welcome. Taking part means keeping to the
 
 septic is the config-driven backend organ of the [poops](https://github.com/stamat/poops)
 ecosystem: one `poops.json` `septic` block → a SQLite schema, a REST CRUD API,
-and auth. It exists to **share poops's config and (soon) feed its static build** —
+and auth. It exists to **share poops's config and feed its static build** —
 not to compete with PocketBase or Supabase on features. It stays deliberately
 small and Node-native, with no dragged binaries. CRUD, auth and validation are
 commodities here; the value is the poops tie-in. Features that grow septic into

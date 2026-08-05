@@ -19,6 +19,28 @@ option, a different default, an error that is now thrown, output that moved.
 - Docs site (`docs/`, built with poops + poops-docs-theme), deployed to GitHub
   Pages via `.github/workflows/pages.yml`. `npm run docs:serve` to preview.
   Now with How-to guides (a todo manager, a blog).
+- The public API shipped in 1.2.0 is documented at last: a table of every export
+  and what it returns in the docs Overview, and a mount example in the README.
+- The docs now place septic in the ecosystem instead of describing it alone: an
+  organ table on the Overview (poops compiles, septic serves, laxative runs both
+  on one origin), a "Where they meet: one origin" section on the Forms page
+  saying plainly that `septic serve` never serves the built site, a Next list
+  closing the Quick start, and a scope line opening each How-to so the split
+  from laxative's full-stack versions is clear before you start, not after.
+
+### Fixed
+
+- Every link into laxative's docs 404'd — those pages answer without a trailing
+  slash (`/laxative/docs/howto-todo`, not `…/howto-todo/`).
+
+- The README claimed v0.1 and listed relations, media and the pooppress dogfood
+  as roadmap — all three shipped in 1.0–1.1. It now states the version, what is
+  in, and that septic is **not on npm yet**: install is `npm i stamat/septic`
+  from git until an npm trusted publisher exists. The docs Overview said
+  `npm i septic`, which 404s; corrected the same way.
+- `build.resources.<name>.where` (1.3.0) had reached only the blog How-to. It is
+  now in the README's bridge section and on the reference page that covers the
+  bridge.
 
 ## [1.3.0] — filter the bridge
 

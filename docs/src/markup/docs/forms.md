@@ -48,9 +48,18 @@ Native HTML5 validation fires from the emitted attributes with no JS. Include `a
 ```json
 "build": {
   "resources": {
-    "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html" }
+    "posts": {
+      "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html",
+      "where": { "status": "published" }
+    }
   }
 }
 ```
 
-Each row → `src/markup/posts/<slug>.md` (front matter + body), regenerated clean, then poops compiles the site. One config, one dataset — a live API **and** a static site. poops is an optional peer: markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
+Each row → `src/markup/posts/<slug>.md` (front matter + body), regenerated clean, then poops compiles the site. `where` is optional — an equality filter (multiple keys ANDed, values bound) so drafts stay out of the static site while the API still serves them. One config, one dataset — a live API **and** a static site. poops is an optional peer: markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
+
+## Where they meet: one origin
+
+An emitted form posts to a **relative** `/api/<resource>`, so it works only when the page and the API answer on the same host. septic serves `/api` and `/uploads`; the compiled site is poops output, and nothing in septic serves it. Two processes on two ports means the form posts into the void.
+
+[laxative](https://stamat.info/laxative) is the piece that closes that: it boots septic's app, serves the built site behind it, and rebuilds on change — `laxative dev` in development, `laxative serve` in production. Same host, same port, no CORS to configure. Prefer your own server? Mount `createServer(config).app` beside your static handler — see [the exports](index#as-a-library).

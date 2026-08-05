@@ -9,6 +9,8 @@ order: 6
 
 The blog is what septic is *for*: posts live in a database, and `septic build` turns the published ones into a static site via poops. One config; drafts never ship.
 
+> **The backend half.** You end with posts in a database and a built site. Writing them from an admin page served beside that site is [laxative's version of this how-to](https://stamat.info/laxative/docs/howto-blog).
+
 ## 1. The posts resource
 
 ```json
@@ -97,4 +99,4 @@ Add `build.forms` for a write/edit form:
 
 ## What you got
 
-Posts in a database → a static blog, drafts excluded, from one config. For the full app — an admin page to write posts, served next to the site — see the same how-to in [laxative](https://stamat.info/laxative/docs/howto-blog/).
+Posts in a database → a static blog, drafts excluded, from one config. For the full app — an admin page to write posts, served next to the site — see the same how-to in [laxative](https://stamat.info/laxative/docs/howto-blog).

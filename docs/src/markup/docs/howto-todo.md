@@ -9,6 +9,8 @@ order: 5
 
 A working todo backend in one `poops.json` — table, REST API, filtering, and a form. No code.
 
+> **The backend half.** You end with an API and a form partial. The page that lists and toggles todos, served on the same origin as the API, is [laxative's version of this how-to](https://stamat.info/laxative/docs/howto-todo).
+
 ## 1. Define the resource
 
 ```json
@@ -82,4 +84,4 @@ Generate an HTML form for adding todos, wired to `/api/todos`:
 
 ## What you got
 
-One resource definition → a `todos` table, five REST routes, validation, filtering, and a form — the whole backend of a todo app. To turn it into a full app (a page that lists and toggles todos), see the same how-to in [laxative](https://stamat.info/laxative/docs/howto-todo/).
+One resource definition → a `todos` table, five REST routes, validation, filtering, and a form — the whole backend of a todo app. To turn it into a full app (a page that lists and toggles todos), see the same how-to in [laxative](https://stamat.info/laxative/docs/howto-todo).

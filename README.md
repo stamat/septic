@@ -2,11 +2,13 @@
 
 Config-driven backend for the [poops](https://github.com/stamat/poops) ecosystem. One `poops.json`, a `septic` block → SQLite schema + REST CRUD + auth. The backend twin of the poops frontend. (A septic tank is the backend that stores and processes what poops produces.)
 
-> **Status.** v0.1 spine (config → table → CRUD → validate → auth) + the poops bridge (`septic build`). Node-native, no dragged binaries. Roadmap: relations, media, dogfooding pooppress.
+> **Status.** v1.3.0 — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. **Not on npm yet**: tags cut a GitHub Release, and publishing waits on an npm trusted publisher — install from git until then. No realtime, no admin UI, no plugin system; [CONTRIBUTING.md](CONTRIBUTING.md) says why. Full reference: [stamat.info/septic](https://stamat.info/septic/).
 
 ## Why it exists
 
-Not to compete with PocketBase/Supabase/Payload — it can't and shouldn't. Its one moat: it shares `poops.json` and (v0.3) emits the poops static-site markup bridge. Everything else (CRUD, auth, validation) is commodity, kept deliberately minimal.
+Not to compete with PocketBase/Supabase/Payload — it can't and shouldn't. Its one moat: it shares `poops.json` and emits the poops static-site markup bridge. Everything else (CRUD, auth, validation) is commodity, kept deliberately minimal.
+
+Three organs read that one config: [poops](https://github.com/stamat/poops) compiles the pages, septic serves the data, [laxative](https://github.com/stamat/laxative) runs both on one origin so a generated form posts to the host that rendered it. `septic serve` mounts `/api` and `/uploads` only — it never serves the built site, and that division is deliberate.
 
 ## Config
 
@@ -57,11 +59,12 @@ Uploads are stored under `dir`, served at `url`; each `image` also gets a resize
 ## Run
 
 ```sh
-npm install
-npm run serve          # reads ./poops.json, serves the API on :3000
-node bin/septic.js build   # DB rows → poops markup → static site
-npm test               # the CRUD + bridge checks
+npm i stamat/septic    # from git — not published to npm yet
+npx septic serve       # reads ./poops.json, serves the API on :3000
+npx septic build       # DB rows → poops markup → static site
 ```
+
+Node ≥ 22. From a clone: `script/bootstrap`, `script/server`, `script/test`.
 
 Generated routes per resource (only the `methods` you list):
 
@@ -73,7 +76,7 @@ Generated routes per resource (only the `methods` you list):
 | PUT    | `/api/:resource/:id` (partial) | `access.write` |
 | DELETE | `/api/:resource/:id` | `access.write` |
 
-Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"`, a role name, or a list of roles (`["editor","admin"]`); `admin` passes everything.
+Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"`, a role name, or a list of roles (`["editor","admin"]`); `admin` passes everything. Sessions are stateless signed cookies — **set `SEPTIC_SECRET` in production**, or the key is random per boot and every restart logs everyone out.
 
 ### Querying a list
 
@@ -93,12 +96,17 @@ The one thing no other backend does: the same data serves a live API **and** a s
 ```json
 "build": {
   "resources": {
-    "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html" }
+    "posts": {
+      "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html",
+      "where": { "status": "published" }
+    }
   }
 }
 ```
 
 Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter, the `body` field becomes the document body, `layout` is added if named. The directory is regenerated clean each run (a deleted row leaves no orphan file). Then septic runs [poops](https://github.com/stamat/poops) over the same `poops.json` to compile the site.
+
+`where` is an optional equality filter — only matching rows are emitted, so a blog keeps its drafts out of the static site while the API still serves them. Multiple keys are ANDed; column names come from your config and values are bound, never interpolated.
 
 poops is an **optional peer** — markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
 
@@ -143,6 +151,20 @@ Native HTML5 validation fires from the emitted attributes (`required`, `pattern`
 ```html
 <script type="module" src="/path/to/septic-forms.js"></script>
 ```
+
+## As a library
+
+The CLI is one caller of the same exports, so another tool can mount septic inside its own server instead of shelling out:
+
+```js
+import { loadConfig, createServer } from 'septic'
+
+const config = loadConfig()               // ./poops.json → the resolved config
+const { app, db } = createServer(config)  // schema up, routes mounted — it never listens
+app.listen(3000)                          // the port is yours
+```
+
+Also exported: `prepareDb`, `build`, `toMarkup`, `emitForms`, `formHtml`, `parseResource`, `parseResources`, `openDb` — [the reference lists what each returns](https://stamat.info/septic/docs/).
 
 ---
 

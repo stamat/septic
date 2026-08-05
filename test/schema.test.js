@@ -48,7 +48,10 @@ test('the example config validates', () => {
 // that is not parseable JSON is prose about JSON (an ellipsis, a comment) and a
 // block without the key belongs to poops or to a request body.
 function configExamples(file) {
-  const source = readFileSync(file, 'utf8')
+  // Normalised on read: a checkout with CRLF line endings makes a fence pattern
+  // anchored to \n match nothing, and the crawler then checks zero examples
+  // while still passing. CI is Ubuntu-only here, so nothing else would say so.
+  const source = readFileSync(file, 'utf8').replace(/\r\n/g, '\n')
   const found = []
   for (const match of source.matchAll(/```json\n([\s\S]*?)```/g)) {
     let doc

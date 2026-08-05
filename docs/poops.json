@@ -1,0 +1,43 @@
+{
+  "styles": [{
+    "in": "node_modules/poops-docs-theme/scss/docs.scss",
+    "out": "docs/dist/css/docs.css",
+    "options": { "minify": true, "justMinified": true }
+  }],
+  "scripts": [{
+    "in": "node_modules/poops-docs-theme/src/docs.ts",
+    "out": "docs/dist/js/docs.js",
+    "options": { "minify": true, "justMinified": true, "format": "iife", "target": "es2019" }
+  }],
+  "markup": {
+    "in": "docs/src/markup",
+    "out": "docs/dist",
+    "options": {
+      "site": {
+        "title": "septic",
+        "brand": "septic",
+        "brandMark": "🚽",
+        "description": "Config-driven backend for the poops ecosystem: one poops.json → SQLite + REST + generated forms.",
+        "url": "https://stamat.github.io/septic",
+        "repo": "https://github.com/stamat/septic",
+        "branch": "main",
+        "lang": "en",
+        "links": [
+          { "title": "GitHub", "url": "https://github.com/stamat/septic" },
+          { "title": "laxative", "url": "https://github.com/stamat/laxative" }
+        ],
+        "iconLinks": [
+          { "title": "GitHub", "url": "https://github.com/stamat/septic", "icon": "github" }
+        ]
+      },
+      "searchIndex": "search-index.json",
+      "sitemap": "sitemap.xml",
+      "robots": "robots.txt",
+      "nav": { "out": "nav.json", "root": "docs" }
+    }
+  },
+  "serve": { "port": 4042, "base": "docs/dist" },
+  "livereload": true,
+  "watch": ["docs/src"],
+  "includePaths": ["node_modules"]
+}

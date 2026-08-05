@@ -14,6 +14,11 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+### Added
+
+- Docs site (`docs/`, built with poops + poops-docs-theme), deployed to GitHub
+  Pages via `.github/workflows/pages.yml`. `npm run docs:serve` to preview.
+
 ## [1.2.0] — a public API
 
 ### Added

@@ -23,7 +23,9 @@
   "scripts": {
     "serve": "node bin/septic.js serve",
     "test": "node --test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "docs:build": "poops --build -c docs/poops.json",
+    "docs:serve": "poops -c docs/poops.json"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",
@@ -42,7 +44,9 @@
   },
   "devDependencies": {
     "eslint": "^9.39.3",
-    "neostandard": "^0.13.0"
+    "neostandard": "^0.13.0",
+    "poops": "^2.0.0",
+    "poops-docs-theme": "^2.0.0"
   },
   "repository": {
     "type": "git",

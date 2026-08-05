@@ -8,7 +8,7 @@ Do not open a public issue. Expect an initial response within a few days.
 
 ## Supported versions
 
-septic is pre-1.0. Only the latest release receives fixes.
+Only the latest release receives fixes.
 
 ## Operational notes
 
@@ -17,5 +17,11 @@ septic is pre-1.0. Only the latest release receives fixes.
   restart and cannot be shared across workers.
 - **`auth.seed` is a dev convenience.** Never ship a known seed password to
   production — seed once, then rotate.
+- **Uploads keep their extension and are served back unfiltered.** A stored file
+  gets a random name but the original suffix, and there is no MIME allowlist —
+  so an `.html` or `.svg` accepted by a resource with public write access is
+  returned as active content from whatever origin serves `media.url`. Gate
+  `file`/`image` writes by role, or serve `media.url` from a host that is not
+  your site's.
 - Access defaults deny writes: a resource with no `access.write` requires the
   `admin` role.

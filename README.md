@@ -36,6 +36,30 @@ Add a `septic` block to `poops.json`. Presence = instantiation — nothing mount
 }
 ```
 
+### Editor completion
+
+A field spec is a string, so nothing in JSON can tell `"string required"` from `"strng requried"` — and septic only finds out at boot, if it gets that far. Point `$schema` at the shipped [JSON Schema](https://json-schema.org) and the editor completes and checks the whole block as you type, the DSL included:
+
+```json
+{
+  "$schema": "./node_modules/septic/schema/septic.schema.json",
+  "septic": { "db": "data/app.db" }
+}
+```
+
+Or at the hosted copy, `https://stamat.info/septic/septic.schema.json`, which needs nothing installed. It describes the `septic` block and leaves the rest of `poops.json` alone; to have Poops' own keys checked in the same file, point `$schema` at a local file composing both:
+
+```json
+{
+  "allOf": [
+    { "$ref": "https://stamat.info/poops/poops.schema.json" },
+    { "$ref": "https://stamat.info/septic/septic.schema.json" }
+  ]
+}
+```
+
+The schema is stricter than the parser in one place, on purpose: `"string ="` parses to an empty-string default, and the schema flags it. Everything else the parser accepts, it accepts — a test pins the two together.
+
 ### Field DSL
 
 `"<type>[ flag]... [ = default]"`

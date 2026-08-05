@@ -1,4 +1,5 @@
 {
+  "$schema": "../schema/septic.schema.json",
   "septic": {
     "db": "data/example.db",
     "auth": {

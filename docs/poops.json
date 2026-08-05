@@ -42,6 +42,7 @@
       "nav": { "out": "nav.json", "root": "docs" }
     }
   },
+  "copy": [{ "in": "schema/septic.schema.json", "out": "docs/dist" }],
   "serve": { "port": 4042, "base": "docs/dist" },
   "livereload": true,
   "watch": ["docs/src"],

@@ -1,0 +1,236 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stamat.info/septic/septic.schema.json",
+  "title": "septic configuration",
+  "description": "The `septic` block of a poops.json — SQLite schema, REST CRUD, auth and the poops static-site bridge. https://stamat.info/septic",
+  "type": "object",
+  "properties": {
+    "septic": { "$ref": "#/definitions/septic" }
+  },
+  "definitions": {
+    "septic": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Presence is instantiation — nothing mounts unless it is declared.",
+      "properties": {
+        "db": {
+          "type": "string",
+          "description": "SQLite file, resolved relative to this config file.",
+          "default": "data/septic.db"
+        },
+        "auth": { "$ref": "#/definitions/auth" },
+        "media": { "$ref": "#/definitions/media" },
+        "resources": {
+          "type": "object",
+          "description": "One entry per table, keyed by resource name. The name becomes the table and the `/api/<name>` route.",
+          "additionalProperties": { "$ref": "#/definitions/resource" }
+        },
+        "build": { "$ref": "#/definitions/build" }
+      }
+    },
+
+    "auth": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Sessions are stateless signed cookies. Set SEPTIC_SECRET in production — without it the key is random per boot, so every restart logs everyone out.",
+      "properties": {
+        "seed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["email", "password"],
+          "description": "First admin, inserted only when the users table is empty. A development convenience — change the password before anything is exposed.",
+          "properties": {
+            "email": { "type": "string", "minLength": 1 },
+            "password": { "type": "string", "minLength": 1 },
+            "role": { "type": "string", "default": "admin" }
+          }
+        }
+      }
+    },
+
+    "media": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Upload handling for `file` and `image` fields. Without this block the defaults below still apply.",
+      "properties": {
+        "dir": { "type": "string", "description": "Directory uploads are written to.", "default": "data/uploads" },
+        "url": { "type": "string", "description": "Public path they are served at.", "default": "/uploads" },
+        "sizes": {
+          "type": "array",
+          "description": "Widths to resize each image to, alongside the original. Needs `sharp`; without it the upload is still stored, just without variants.",
+          "items": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "type": "object",
+          "description": "Column name to field spec. An `id` column is added for you.",
+          "additionalProperties": { "$ref": "#/definitions/field" }
+        },
+        "methods": {
+          "type": "array",
+          "description": "Routes to generate. Only what is listed exists.",
+          "items": { "enum": ["GET", "POST", "PUT", "DELETE"] },
+          "uniqueItems": true,
+          "default": ["GET", "POST", "PUT", "DELETE"]
+        },
+        "access": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "read": { "description": "Who may GET. Defaults to public.", "allOf": [{ "$ref": "#/definitions/accessRule" }] },
+            "write": { "description": "Who may POST, PUT and DELETE. Defaults to admin.", "allOf": [{ "$ref": "#/definitions/accessRule" }] }
+          }
+        },
+        "fieldAccess": {
+          "type": "object",
+          "description": "Per-field write gate. A field the caller may not write is dropped from the payload rather than refused, so the rest of the write still lands.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "write": { "$ref": "#/definitions/accessRule" }
+            }
+          }
+        },
+        "indexes": {
+          "type": "array",
+          "description": "Non-unique indexes. A string indexes one column, an array makes a composite.",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+            ]
+          }
+        },
+        "unique": {
+          "type": "array",
+          "description": "Unique constraints, one entry per constraint.",
+          "items": { "$ref": "#/definitions/uniqueConstraint" }
+        }
+      }
+    },
+
+    "accessRule": {
+      "description": "\"public\", a role name, or a list of roles. `admin` passes everything.",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      ]
+    },
+
+    "uniqueConstraint": {
+      "oneOf": [
+        { "type": "string", "description": "One column." },
+        { "type": "array", "items": { "type": "string" }, "minItems": 1, "description": "Composite over several columns." },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["columns"],
+          "description": "Composite with NULL handling. SQLite counts NULLs as distinct, so two rows with a null column never collide — `coalesce` substitutes a sentinel so they do.",
+          "properties": {
+            "columns": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "coalesce": {
+              "type": "object",
+              "description": "Column to the value a NULL stands in as.",
+              "additionalProperties": { "type": ["string", "number"] }
+            }
+          }
+        }
+      ]
+    },
+
+    "field": {
+      "type": "string",
+      "description": "\"<type>[ flag]... [ = default]\".\n\ntypes: string, text, slug, email, integer, boolean, datetime, json, file, image, enum(a,b,c), ref:<resource>\nflags: required, unique, and on a ref only, ondelete=cascade|setnull|restrict\ndefault: \"= value\" — \"= now\" stamps a datetime at insert, \"= now!\" also re-stamps it on every update.\n\nThe parser splits on whitespace, so the `=` needs a space either side and enum values must carry none: enum(a,b,c), never enum(a, b, c). `ondelete` is accepted on a ref only — the foreign key it configures is the one place it is read, so anywhere else it parses and does nothing.",
+      "pattern": "^(ref:[A-Za-z_][A-Za-z0-9_]*( +(required|unique|ondelete=(cascade|setnull|restrict)))*|(string|text|slug|email|integer|boolean|datetime|json|file|image|enum\\([^)\\s]*\\))( +(required|unique))*)( += +\\S.*)?$",
+      "examples": ["string required", "slug unique", "text", "enum(draft,review,published) = draft", "datetime = now", "datetime = now!", "ref:authors ondelete=cascade"]
+    },
+
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The poops bridge: DB rows become markup, and forms become partials, before poops compiles the site from the same config file. poops is an optional peer — the markup is written either way, and a missing poops only skips the compile.",
+      "properties": {
+        "resources": {
+          "type": "object",
+          "description": "Resources to emit as markup, keyed by resource name.",
+          "additionalProperties": { "$ref": "#/definitions/buildResource" }
+        },
+        "forms": {
+          "type": "object",
+          "description": "Resources to emit an HTML form for, keyed by resource name.",
+          "additionalProperties": { "$ref": "#/definitions/buildForm" }
+        }
+      }
+    },
+
+    "buildResource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["into"],
+      "properties": {
+        "into": {
+          "type": "string",
+          "description": "Directory the markup is written to, relative to the config file. Regenerated clean on every run, so a deleted row leaves no orphan file — point it at a directory nothing else owns."
+        },
+        "slug": { "type": "string", "description": "Field used as the filename. Falls back to the row id when the field is empty.", "default": "slug" },
+        "body": { "type": "string", "description": "Field used as the document body. Every other field becomes YAML front matter.", "default": "body" },
+        "layout": { "type": "string", "description": "Added to the front matter as `layout`, for poops to render with." },
+        "where": {
+          "type": "object",
+          "description": "Equality filter, keys ANDed — a blog keeps drafts out of the static site while the API still serves them. Values are bound, never interpolated.",
+          "additionalProperties": { "type": ["string", "number", "boolean", "null"] },
+          "examples": [{ "status": "published" }]
+        }
+      }
+    },
+
+    "buildForm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["into"],
+      "description": "The form is built from the same field DSL that made the table, and posts to that resource's own endpoint. Fields the server owns — `id`, and any `datetime = now` — are left out unless a hint asks for them.",
+      "properties": {
+        "into": { "type": "string", "description": "Directory the form partial is written to, relative to the config file." },
+        "action": { "type": "string", "description": "Form target. Defaults to `/api/<resource>`." },
+        "success": { "type": "string", "description": "Where a successful submit lands — an HX-Redirect for HTMX, a 303 without JavaScript." },
+        "submitLabel": { "type": "string", "description": "Submit button text.", "default": "Save" },
+        "hints": {
+          "type": "object",
+          "description": "Per-field presentation, keyed by field name. Everything here is optional — the field spec already decides the input type.",
+          "additionalProperties": { "$ref": "#/definitions/fieldHint" }
+        }
+      }
+    },
+
+    "fieldHint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": { "type": "string", "description": "Overrides the humanised field name." },
+        "help": { "type": "string", "description": "Hint text under the control, wired to it with aria-describedby." },
+        "widget": {
+          "enum": ["input", "textarea", "select", "checkbox", "file"],
+          "description": "Overrides the control the field type would pick — text and json give a textarea, enum and ref a select, boolean a checkbox, file and image a file input, everything else an input."
+        },
+        "include": {
+          "type": "boolean",
+          "description": "Ask for a field the form would otherwise own — a `datetime = now`, say."
+        },
+        "optionLabel": {
+          "type": "string",
+          "description": "For a `ref:` select, the referenced table's column to show. Falls back to whichever of name, title or slug that table has, then to its id."
+        },
+        "maxlength": { "type": "integer", "minimum": 1, "description": "Native maxlength attribute." },
+        "min": { "type": ["integer", "number", "string"], "description": "Native min attribute." },
+        "max": { "type": ["integer", "number", "string"], "description": "Native max attribute." }
+      }
+    }
+  }
+}

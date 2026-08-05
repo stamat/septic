@@ -14,6 +14,23 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+### Added
+
+- **A JSON Schema for the `septic` block**, shipped as `schema/septic.schema.json`
+  and published at `https://stamat.info/septic/septic.schema.json`. Point
+  `$schema` at it and the editor completes and validates the whole block —
+  including the field DSL, which is a plain string, so nothing in JSON could
+  previously tell `"string required"` from `"strng requried"` and septic only
+  found out at boot. It describes the `septic` block and leaves the rest of
+  `poops.json` alone; the README shows the two-line `allOf` that composes it
+  with Poops' own schema when you want both checked in one file.
+
+  A test pins the schema's DSL pattern to `parseField`, so the two cannot drift:
+  every spec the parser accepts, the schema accepts. It is stricter in exactly
+  one place, deliberately — `"string ="` parses to an empty-string default and
+  the schema flags it — and stricter about `ondelete=` too, which the parser
+  takes on any field but only a `ref:` ever reads.
+
 ## [1.0.0] — one config, a backend
 
 The first release. Everything below was built and tagged across a run of 0.x and

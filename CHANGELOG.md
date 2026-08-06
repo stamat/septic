@@ -19,6 +19,8 @@ carries over into the released heading.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-06
+
 ### Security
 
 - **A malformed cookie no longer turns every route into a 500.** The session

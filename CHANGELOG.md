@@ -16,6 +16,14 @@ option, a different default, an error that is now thrown, output that moved.
 
 ### Security
 
+- **A malformed cookie no longer turns every route into a 500.** The session
+  middleware runs on each request, and three shapes of hostile `Cookie` header
+  threw inside it: malformed percent-encoding (`%zz` — in *any* cookie on the
+  domain, not just septic's), a session mac with multibyte characters (byte
+  length tripped `timingSafeEqual`), and a well-signed-looking token whose body
+  is not JSON. All of them now read as "no session" and the request proceeds
+  anonymously.
+
 - **A read returns only the `id` and the fields the config declares — and
   `?expand=` now obeys the target's own read rule.** Both read paths used
   `SELECT *`, so a column septic never declared rode along in responses. The

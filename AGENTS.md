@@ -11,6 +11,7 @@ script/bootstrap # install what the project needs, from a fresh clone
 script/server    # run it locally against example/poops.json
 script/test      # run the tests
 script/lint      # run the linter (neostandard; the authority, CI runs it)
+script/publish   # cut a release: version, changelog, commit, tag, push
 node bin/septic.js build   # DB rows → poops markup → static site (the bridge)
 ```
 

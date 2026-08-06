@@ -12,6 +12,11 @@ Write your change under `## [Unreleased]`, grouped under `### Added`,
 Write it for the person upgrading, not the person who wrote the code: a renamed
 option, a different default, an error that is now thrown, output that moved.
 
+On `script/publish`, `script/changelog` cuts this section into a released entry
+in the same commit as the version bump, and the entry becomes the body of the
+GitHub release verbatim. A title written as `## [Unreleased] — the headline`
+carries over into the released heading.
+
 ## [Unreleased]
 
 ### Security
@@ -127,7 +132,7 @@ option, a different default, an error that is now thrown, output that moved.
   the schema flags it — and stricter about `ondelete=` too, which the parser
   takes on any field but only a `ref:` ever reads.
 
-## [1.0.0] — one config, a backend
+## [1.0.0] - 2026-08-06 — one config, a backend
 
 The first release. Everything below was built and tagged across a run of 0.x and
 1.x tags that never reached a registry; those tags and their releases are gone,

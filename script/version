@@ -1,0 +1,14 @@
+#!/bin/bash
+#
+# Write $1 into package.json. The one script in here that knows the language —
+# script/publish calls it before it commits.
+#
+# Commit nothing — script/publish stages and commits what this writes.
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+version="${1:-}"
+[ -n "$version" ] || { echo "usage: script/version <version>" >&2; exit 1; }
+
+npm version "$version" --no-git-tag-version --allow-same-version

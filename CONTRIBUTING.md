@@ -24,6 +24,7 @@ script/bootstrap
 script/server    # run it locally against example/poops.json
 script/test      # run the tests (node --test)
 script/lint      # run the linter (neostandard; CI runs it)
+script/publish   # cut a release (maintainers)
 ```
 
 Source of truth is `lib/`. The field DSL parsed in `lib/schema.js` produces the
@@ -52,8 +53,16 @@ Commit messages are freeform; write something that says what changed.
 
 ## How a release works
 
-Bump the version in `package.json`, move `## [Unreleased]` in the changelog into
-a new `## [x.y.z]` section, commit, then tag `vx.y.z` and push the tag. Pushing
-the tag triggers [publish.yml](.github/workflows/publish.yml), which publishes to
-npm via trusted publishing (OIDC — no token stored anywhere). Configure the npm
-trusted publisher once before the first release.
+Maintainer flow, recorded here so the automation isn't a mystery:
+
+`script/publish [version]` takes the current version from the last `v*` tag,
+writes the new one into `package.json` with `script/version`, runs
+`script/changelog` to cut `[Unreleased]` into a released entry, commits, tags and
+pushes. There is no `script/build` — the library ships as source. Pushing the tag
+triggers [publish.yml](.github/workflows/publish.yml), which publishes to npm via
+trusted publishing (OIDC — no token stored anywhere). The changelog entry becomes
+the body of the GitHub release verbatim.
+
+npm publish is gated on the `NPM_PUBLISH` repository variable, so a tag cuts a
+GitHub release whether or not the npm trusted publisher exists yet. Configure the
+publisher, then set the variable to `true`.

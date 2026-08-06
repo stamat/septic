@@ -23,7 +23,8 @@ const config = {
         created: 'datetime = now'
       }
     },
-    authors: { methods: ['GET'], access: { read: 'public' }, fields: { name: 'string required' } }
+    authors: { methods: ['GET'], access: { read: 'public' }, fields: { name: 'string required' } },
+    drafts: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { note: 'string' } }
   }
 }
 
@@ -106,6 +107,13 @@ test('unique constraint → 409', async() => {
   await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'A', slug: 'dup' }) })
   const res = await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'B', slug: 'dup' }) })
   assert.equal(res.status, 409)
+})
+
+test('an empty create on an all-optional resource is a row, not a 500', async() => {
+  const res = await fetch(url('/api/drafts'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+  assert.equal(res.status, 201)
+  const row = await res.json()
+  assert.ok(row.id)
 })
 
 test('read-only resource has no POST route (404)', async() => {

@@ -72,6 +72,11 @@ option, a different default, an error that is now thrown, output that moved.
   value and showed an empty picker. Rows written before this change keep their
   old shape until next edited.
 
+- **`POST {}` to a resource whose fields are all optional creates a row instead
+  of a 500.** With nothing to insert the SQL came out as `INSERT INTO t ()
+  VALUES ()`, a SQLite syntax error; it is now `INSERT ... DEFAULT VALUES` —
+  an empty create is still a create, and returns the new row with its `id`.
+
 - **A checkbox can now be unchecked on an edit form.** An unchecked checkbox is
   absent from an HTML submit, and the edit path deliberately leaves omitted
   fields alone — so once a boolean was on, no form could turn it off. The

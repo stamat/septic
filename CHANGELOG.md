@@ -58,6 +58,17 @@ carries over into the released heading.
   paths already answered 400 there, the JSON one saying `no fields to update`
   and the HTML one `nothing to update`; there is now one message, from one place.
 
+### Security
+
+- **js-yaml moved off a version with a high advisory.** The dependency bump to
+  `js-yaml@5.2.1` landed inside the range of
+  [GHSA-pm4m-ph32-ghv5](https://github.com/advisories/GHSA-pm4m-ph32-ghv5)
+  (exponential parsing time in flow collections → denial of service); the
+  lockfile now resolves 5.2.3, which is outside it. septic imports only `dump`
+  and never parses YAML, so nothing here was reachable — but a project running
+  `npm audit` over its own tree would have seen it, and the fix was already
+  inside the declared range.
+
 ### Fixed
 
 `v2.0.0` was tagged, released on GitHub, and never reached npm. The publish

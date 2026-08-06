@@ -48,8 +48,8 @@
     "ajv": "^8.20.0",
     "eslint": "^9.39.3",
     "neostandard": "^0.13.0",
-    "poops": "^2.0.0",
-    "poops-docs-theme": "^2.0.0"
+    "poops": "^2.1.0",
+    "poops-docs-theme": "^3.0.1"
   },
   "repository": {
     "type": "git",

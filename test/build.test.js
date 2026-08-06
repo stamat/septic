@@ -1,6 +1,6 @@
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { rmSync, readFileSync, existsSync, readdirSync } from 'node:fs'
+import { rmSync, readFileSync, existsSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { prepareDb } from '../lib/server.js'
 import { build, toMarkup } from '../lib/build.js'
@@ -67,6 +67,24 @@ test('build emits one markup file per row (compile:false)', async() => {
   assert.match(md, /status: published/)
   assert.match(md, /layout: post\.html/)
   assert.match(md, /# Hi\n\nBody text\.\n$/)
+})
+
+test('a rebuild with nothing changed writes nothing — a watcher over the tree stays quiet', async() => {
+  await build(config, db, { compile: false })
+  const dir = path.join(ROOT, 'src/markup/posts')
+  const stamps = Object.fromEntries(readdirSync(dir).map((f) => [f, statSync(path.join(dir, f)).mtimeMs]))
+  await new Promise((resolve) => setTimeout(resolve, 25)) // let the clock move, so a rewrite would show
+  await build(config, db, { compile: false })
+  for (const [f, mtime] of Object.entries(stamps)) {
+    assert.equal(statSync(path.join(dir, f)).mtimeMs, mtime, `${f} was rewritten without changing`)
+  }
+})
+
+test('a stray file in the emit dir is swept — the dir stays septic-owned', async() => {
+  const dir = path.join(ROOT, 'src/markup/posts')
+  writeFileSync(path.join(dir, 'handmade.md'), 'not from a row\n')
+  await build(config, db, { compile: false })
+  assert.equal(existsSync(path.join(dir, 'handmade.md')), false, 'a file no row keys survived the sweep')
 })
 
 test('build regenerates clean — deleted rows leave no orphan files', async() => {

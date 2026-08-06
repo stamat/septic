@@ -56,7 +56,7 @@ Native HTML5 validation fires from the emitted attributes with no JS. Include `a
 }
 ```
 
-Each row → `src/markup/posts/<slug>.md` (front matter + body), regenerated clean, then poops compiles the site. `where` is optional — an equality filter (multiple keys ANDed, values bound) so drafts stay out of the static site while the API still serves them. One config, one dataset — a live API **and** a static site. poops is an optional peer: markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
+Each row → `src/markup/posts/<slug>.md` (front matter + body), kept in step — only changed files are rewritten, deleted rows are swept — then poops compiles the site. `where` is optional — an equality filter (multiple keys ANDed, values bound) so drafts stay out of the static site while the API still serves them. One config, one dataset — a live API **and** a static site. poops is an optional peer: markup is always written; if poops isn't installed, `septic build` emits the markup and says so.
 
 ## Where they meet: one origin
 

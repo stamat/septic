@@ -59,6 +59,17 @@ option, a different default, an error that is now thrown, output that moved.
   in responses, declare them; if you expand a ref, the target must be a
   configured resource.
 
+### Changed
+
+- **`build` writes only what changed.** It used to `rm` each emit dir and
+  rewrite every file on every run, so a watcher over the tree — an editor,
+  poops's own watch, laxative's dev loop — saw a full rewrite on a no-op build,
+  and there was a moment mid-build where the tree was empty. Markup files and
+  form partials are now written only when their content differs; files from
+  deleted rows are swept afterwards. The contract is unchanged: an emit dir is
+  wholly septic-owned, and anything in it not keyed by a current row is still
+  removed.
+
 ### Fixed
 
 - **Every `datetime` is stored in one shape.** A `datetime-local` input sends

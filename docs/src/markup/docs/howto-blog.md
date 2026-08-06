@@ -54,7 +54,7 @@ The blog is what septic is *for*: posts live in a database, and `septic build` t
 }
 ```
 
-`where` is the important bit: `septic build` emits **only** published rows, so drafts stay out of the static site. Each post becomes `src/markup/posts/<slug>.md` — YAML front matter (title, excerpt, published_at, …) + the body — regenerated clean each build, then poops compiles the site.
+`where` is the important bit: `septic build` emits **only** published rows, so drafts stay out of the static site. Each post becomes `src/markup/posts/<slug>.md` — YAML front matter (title, excerpt, published_at, …) + the body — kept in step each build (only changed files rewritten, deleted rows swept), then poops compiles the site.
 
 ## 3. Write a post
 

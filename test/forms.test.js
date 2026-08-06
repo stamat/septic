@@ -1,6 +1,6 @@
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { rmSync, readFileSync } from 'node:fs'
+import { rmSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { parseResource } from '../lib/schema.js'
 import { formHtml, emitForms } from '../lib/forms.js'
@@ -91,6 +91,26 @@ test('emitForms writes one partial per configured resource', () => {
   assert.ok(file.endsWith('posts-form.html'))
   assert.match(readFileSync(file, 'utf8'), /<form class="septic-form"/)
   rmSync(ROOT, { recursive: true, force: true })
+})
+
+test('re-emitting an unchanged form rewrites nothing — a watcher stays quiet', async() => {
+  const ROOT = new URL('./tmp-forms-idem/', import.meta.url).pathname
+  rmSync(ROOT, { recursive: true, force: true })
+  const config = {
+    root: ROOT,
+    dbPath: path.join(ROOT, 'i.db'),
+    auth: {},
+    resources: { posts: { fields: { title: 'string required' } } },
+    build: { forms: { posts: { into: 'out' } } }
+  }
+  const { db } = prepareDb(config)
+  const { posts: file } = emitForms(config, db)
+  const mtime = statSync(file).mtimeMs
+  await new Promise((resolve) => setTimeout(resolve, 25)) // let the clock move, so a rewrite would show
+  emitForms(config, db)
+  const held = statSync(file).mtimeMs
+  db.close(); rmSync(ROOT, { recursive: true, force: true })
+  assert.equal(held, mtime, 'the partial was rewritten without changing')
 })
 
 // ── http: the forms actually work ───────────────────────────────────────────

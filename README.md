@@ -136,7 +136,7 @@ The one thing no other backend does: the same data serves a live API **and** a s
 }
 ```
 
-Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter, the `body` field becomes the document body, `layout` is added if named. The directory is regenerated clean each run (a deleted row leaves no orphan file). Then septic runs [poops](https://github.com/stamat/poops) over the same `poops.json` to compile the site.
+Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter, the `body` field becomes the document body, `layout` is added if named. The directory is septic-owned: only changed files are rewritten (so watchers stay quiet on a no-op build), and a deleted row leaves no orphan file. Then septic runs [poops](https://github.com/stamat/poops) over the same `poops.json` to compile the site.
 
 `where` is an optional equality filter — only matching rows are emitted, so a blog keeps its drafts out of the static site while the API still serves them. Multiple keys are ANDed; column names come from your config and values are bound, never interpolated.
 

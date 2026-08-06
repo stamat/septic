@@ -29,6 +29,18 @@ option, a different default, an error that is now thrown, output that moved.
   character wide. `limit` is now clamped to 1–200 and a negative `offset` reads
   as 0.
 
+- **An uploaded file can no longer execute as the site.** A `file` field
+  accepted any upload and kept its extension, and `express.static` maps
+  extension → `Content-Type` — so an uploaded `.html` (or `.svg`, which runs
+  scripts on navigation) was served same-origin as a page, a stored-XSS
+  primitive for anyone with write access. Uploads now keep their extension only
+  if it is on an inline-safe allow-list (common image, audio, video, `.pdf`,
+  `.txt`, `.zip`); anything else is stored extension-less and served as
+  `application/octet-stream` — downloaded, never rendered. The upload route
+  also sends `X-Content-Type-Options: nosniff`. The original filename is still
+  in the stored metadata; if you need another extension inline, it is a
+  one-line addition to `INLINE_EXT` in `lib/media.js`.
+
 - **A read returns only the `id` and the fields the config declares — and
   `?expand=` now obeys the target's own read rule.** Both read paths used
   `SELECT *`, so a column septic never declared rode along in responses. The

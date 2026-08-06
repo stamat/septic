@@ -16,7 +16,8 @@ const config = {
   auth: {},
   media: { dir: UP, url: '/uploads', sizes: [8] },
   resources: {
-    photos: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { alt: 'string', file: 'image' } }
+    photos: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { alt: 'string', file: 'image' } },
+    attachments: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { doc: 'file' } }
   }
 }
 
@@ -62,4 +63,35 @@ test('the variant is actually resized to the configured width', async() => {
   const variant = readdirSync(UP).find((f) => /-8\.png$/.test(f))
   assert.ok(variant)
   assert.equal((await sharp(path.join(UP, variant)).metadata()).width, 8)
+})
+
+test('an uploaded .html cannot come back executable — the extension is dropped and sniffing is off', async() => {
+  const fd = new FormData()
+  fd.append('doc', new Blob(['<script>alert(1)</script>'], { type: 'text/html' }), 'evil.html')
+  const res = await fetch(`${base}/api/attachments`, { method: 'POST', body: fd })
+  assert.equal(res.status, 201)
+  const row = await res.json()
+  assert.match(row.doc, /^\/uploads\/[a-f0-9]+$/, 'stored without an extension')
+
+  const served = await fetch(`${base}${row.doc}`)
+  assert.equal(served.status, 200)
+  assert.equal(served.headers.get('content-type'), 'application/octet-stream')
+  assert.equal(served.headers.get('x-content-type-options'), 'nosniff')
+})
+
+test('an image claiming a script-capable extension takes the raw path, not sharp', async() => {
+  const fd = new FormData()
+  fd.append('doc', new Blob(['<svg onload="alert(1)"/>'], { type: 'image/svg+xml' }), 'evil.svg')
+  const res = await fetch(`${base}/api/attachments`, { method: 'POST', body: fd })
+  assert.equal(res.status, 201)
+  const row = await res.json()
+  assert.match(row.doc, /^\/uploads\/[a-f0-9]+$/, 'svg is script-capable: no inline extension')
+})
+
+test('a harmless extension is kept', async() => {
+  const fd = new FormData()
+  fd.append('doc', new Blob(['plain'], { type: 'text/plain' }), 'notes.txt')
+  const res = await fetch(`${base}/api/attachments`, { method: 'POST', body: fd })
+  const row = await res.json()
+  assert.match(row.doc, /\.txt$/)
 })

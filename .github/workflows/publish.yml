@@ -22,7 +22,7 @@ jobs:
       # gets a provenance attestation. The publisher is configured on npm's
       # side: https://docs.npmjs.com/trusted-publishers
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm

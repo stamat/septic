@@ -32,8 +32,11 @@
         "lang": "en",
         "links": [
           { "title": "Docs", "url": "docs/" },
-          { "title": "poops", "url": "https://stamat.info/poops" },
-          { "title": "laxative", "url": "https://stamat.info/laxative" }
+          { "title": "poops", "url": "https://stamat.info/poops", "icon": "<span aria-hidden=\"true\">💩</span>" },
+          { "title": "laxative", "url": "https://stamat.info/laxative", "icon": "<span aria-hidden=\"true\">💊</span>" }
+        ],
+        "iconLinks": [
+          { "title": "npm", "url": "https://www.npmjs.com/package/septic", "icon": "npm" }
         ]
       },
       "searchIndex": "search-index.json",

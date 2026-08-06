@@ -17,7 +17,7 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased] — the data layer, and the tag publishes again
+## [Unreleased] — the data layer, and three majors underneath
 
 ### Added
 
@@ -53,6 +53,13 @@ carries over into the released heading.
   Also exported: `resourceStore` for a single resource.
 
 ### Changed
+
+- **express 5, better-sqlite3 13, js-yaml 5.** Three major dependency bumps, and
+  two of them show through septic's own exports: `createServer` hands back an
+  express **5** app, and `prepareDb`/`openDb` hand back a better-sqlite3 **13**
+  handle. Mounting septic inside an express 4 app, or passing your own
+  better-sqlite3 11 handle to `createStore`, is no longer the same pairing it
+  was. The full suite passes on all three.
 
 - **An update with nothing to update answers 400 in one wording.** Both HTTP
   paths already answered 400 there, the JSON one saying `no fields to update`

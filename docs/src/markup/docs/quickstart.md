@@ -8,7 +8,7 @@ order: 2
 # Quick start
 
 ```sh
-npm i stamat/septic     # from git — septic isn't on npm yet
+npm i septic
 ```
 
 Add a `septic` block to `poops.json`:

@@ -17,7 +17,27 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased]
+## [Unreleased] — the tag publishes again
+
+`v2.0.0` was tagged, released on GitHub, and never reached npm. The publish
+workflow gated every npm step on an `NPM_PUBLISH` repository variable that was
+never set, so all four steps skipped and the run went **green** — a passing check
+over a publish that did not happen. npm stayed on 1.0.0, which means everything
+installing septic kept the three security fixes 2.0.0 carries.
+
+### Fixed
+
+- **`publish.yml` publishes.** The `NPM_PUBLISH` gate is gone; a `v*` tag now
+  runs the npm steps unconditionally, so a publish that cannot happen fails the
+  run instead of passing it. Installing dependencies goes through
+  `script/bootstrap` like every other workflow here.
+- **The GitHub release has one owner.** `script/publish` creates it, holding the
+  entry `script/changelog` just cut; the workflow's own awk-over-CHANGELOG copy
+  is gone, along with the `contents: write` permission it needed.
+- **The docs said septic was not on npm.** It has been since 1.0.0 — the install
+  line is `npm i septic` in the README, the docs index and the quickstart, and
+  the README's status line no longer pins a version that the changelog already
+  states.
 
 ## [2.0.0] - 2026-08-06
 

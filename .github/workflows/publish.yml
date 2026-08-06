@@ -6,7 +6,7 @@ on:
       - "v*"
 
 permissions:
-  contents: write # create the GitHub Release
+  contents: read
   id-token: write # required for trusted publishing (OIDC)
 
 jobs:
@@ -17,12 +17,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      # npm publish is gated on the NPM_PUBLISH repo variable so pre-1.0 tags can
-      # cut a GitHub Release without an npm trusted publisher configured yet. Set
-      # the variable to "true" (repo Settings → Secrets and variables → Actions →
-      # Variables) once the publisher exists: https://docs.npmjs.com/trusted-publishers
+      # Trusted publishing: npm trusts this workflow in this repository over
+      # OIDC, so there is no token stored, rotated or leaked, and the tarball
+      # gets a provenance attestation. The publisher is configured on npm's
+      # side: https://docs.npmjs.com/trusted-publishers
       - name: Set up Node.js
-        if: vars.NPM_PUBLISH == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24
@@ -30,33 +29,14 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Update npm # trusted publishing requires npm >= 11.5.1
-        if: vars.NPM_PUBLISH == 'true'
         run: npm install -g npm@latest
 
       - name: Install dependencies
-        if: vars.NPM_PUBLISH == 'true'
-        run: npm ci
+        run: script/bootstrap
 
       - name: Publish to npm
-        if: vars.NPM_PUBLISH == 'true'
         run: npm publish
 
-      # The changelog section for this version becomes the release body,
-      # verbatim — one source of truth for "what changed". Idempotent so a
-      # re-run of the same tag updates rather than fails.
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          notes=$(awk -v v="$version" '
-            $0 ~ "^## \\["v"\\]" { p=1; print; next }
-            p && /^## \[/ { exit }
-            p { print }
-          ' CHANGELOG.md)
-          notes="${notes:-$GITHUB_REF_NAME}"
-          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"
-          else
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes "$notes"
-          fi
+      # The GitHub Release is script/publish's job, not this workflow's: it has
+      # the changelog entry script/changelog just cut, and posting it from here
+      # would race the release the maintainer already created.

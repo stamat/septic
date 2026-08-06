@@ -58,11 +58,10 @@ Maintainer flow, recorded here so the automation isn't a mystery:
 `script/publish [version]` takes the current version from the last `v*` tag,
 writes the new one into `package.json` with `script/version`, runs
 `script/changelog` to cut `[Unreleased]` into a released entry, commits, tags and
-pushes. There is no `script/build` — the library ships as source. Pushing the tag
-triggers [publish.yml](.github/workflows/publish.yml), which publishes to npm via
-trusted publishing (OIDC — no token stored anywhere). The changelog entry becomes
-the body of the GitHub release verbatim.
+pushes. There is no `script/build` — the library ships as source. It then offers
+to open the GitHub release with that changelog entry as the body, which is why
+the release is created from there and not from the workflow.
 
-npm publish is gated on the `NPM_PUBLISH` repository variable, so a tag cuts a
-GitHub release whether or not the npm trusted publisher exists yet. Configure the
-publisher, then set the variable to `true`.
+Pushing the tag triggers [publish.yml](.github/workflows/publish.yml), which
+publishes to npm over trusted publishing: OIDC, no token stored anywhere, and the
+tarball gets a provenance attestation.

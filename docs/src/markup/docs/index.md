@@ -33,10 +33,8 @@ CRUD, auth and validation are commodities — PocketBase and Supabase do them we
 ## Install
 
 ```sh
-npm i stamat/septic
+npm i septic
 ```
-
-From git, because septic is not on npm yet — the tags cut GitHub Releases and publishing waits on an npm trusted publisher.
 
 Requires Node ≥ 22. `better-sqlite3` is an npm native addon (no separate binary to drag around).
 

@@ -55,6 +55,17 @@ option, a different default, an error that is now thrown, output that moved.
 
 ### Fixed
 
+- **Every `datetime` is stored in one shape.** A `datetime-local` input sends
+  `2026-08-06T12:00` and it was stored verbatim, while `= now` stamps
+  `2026-08-06 12:00:00` — and since `'T'` sorts after `' '`, a table holding
+  both shapes mis-sorts on `ORDER BY` and misses equality filters. Client
+  values are now normalized to the `YYYY-MM-DD HH:MM:SS` UTC shape on
+  validation; an offset-less value is read in the server's timezone. Edit forms
+  do the reverse: the stored shape is converted back to the `T` form a
+  `datetime-local` input accepts, where previously the browser dropped the
+  value and showed an empty picker. Rows written before this change keep their
+  old shape until next edited.
+
 - **A checkbox can now be unchecked on an edit form.** An unchecked checkbox is
   absent from an HTML submit, and the edit path deliberately leaves omitted
   fields alone — so once a boolean was on, no form could turn it off. The

@@ -38,6 +38,12 @@ test('email field → native type="email" (client validation for free)', () => {
   assert.match(formHtml(r), /<input id="contacts-email" name="email" type="email" required>/)
 })
 
+test('a stored datetime prefills a datetime-local input in the shape the browser accepts', () => {
+  const r = parseResource('events', { fields: { at: 'datetime' } })
+  const html = formHtml(r, {}, { values: { at: '2026-08-06 12:30:00' } })
+  assert.match(html, /type="datetime-local"[^>]* value="2026-08-06T12:30:00"/)
+})
+
 test('a checkbox renders over a hidden 0, so unchecking it posts a value', () => {
   const r = parseResource('flags', { fields: { featured: 'boolean = false' } })
   assert.match(formHtml(r), /<input type="hidden" name="featured" value="0"><input id="flags-featured" name="featured" type="checkbox" value="1">/)

@@ -70,6 +70,15 @@ test('touch field (updated = now!) is set on insert and re-set on update, never 
   assert.equal(upd.created, undefined)                       // created (= now) is NOT touched on edit
 })
 
+test('a datetime is stored in one shape whatever shape the client sent', () => {
+  const posts = parseResource('posts', config.resources.posts)
+  const sql = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+  const fromPicker = validateAll(posts, { collection: 1, slug: 'dt', created: '2026-08-06T12:00' }).data
+  assert.match(fromPicker.created, sql, 'datetime-local "T" shape normalized')
+  const fromIso = validateAll(posts, { collection: 1, slug: 'dt2', created: '2026-08-06T10:00:00Z' }).data
+  assert.equal(fromIso.created, '2026-08-06 10:00:00', 'an explicit UTC offset is kept as its UTC time')
+})
+
 test('composite unique: slug unique per collection, not globally', async() => {
   const a = await (await send('POST', '/api/collections', admin, { name: 'A' })).json()
   const b = await (await send('POST', '/api/collections', admin, { name: 'B' })).json()

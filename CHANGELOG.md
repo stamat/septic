@@ -17,15 +17,54 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased] — the tag publishes again
+## [Unreleased] — the data layer, and the tag publishes again
+
+### Added
+
+- **`createStore` — septic without the HTTP round trip.** An application with
+  its own routes had no way to use septic: the package exported a server and a
+  build bridge, so reaching your own database from your own request handler
+  meant calling your own API over localhost. `DOGFOOD.md` already promised the
+  opposite — "that code stays in pooppress and *calls into septic*" — and
+  nothing exported supported it.
+
+  ```js
+  import { prepareDb, createStore } from 'septic'
+
+  const { db, resources } = prepareDb(config)
+  const store = createStore(db, resources)
+
+  store.posts.list({ user, where: { status: 'published' } })
+  store.posts.create({ title: 'Hello', slug: 'hello' }, { user })
+  ```
+
+  It enforces what the API enforces, because **the REST router is now a skin
+  over exactly these calls** — `access` per call, `fieldAccess` per field, reads
+  shaped to the declared fields, `expand` obeying the target's own read rule.
+  There is one implementation of "what a read returns", not two that drift.
+
+  `user` is passed per call; omitting it reads as anonymous, which is denied for
+  anything not `"public"`, so a forgotten argument fails closed. `raw(id)` is the
+  named exception that returns the stored row with undeclared columns — a flag on
+  `get` would get passed without meaning it. Failures throw `ValidationError`
+  (with an `errors` map), `AccessError`, `NotFoundError` or `ConflictError`, each
+  carrying `.status`.
+
+  Also exported: `resourceStore` for a single resource.
+
+### Changed
+
+- **An update with nothing to update answers 400 in one wording.** Both HTTP
+  paths already answered 400 there, the JSON one saying `no fields to update`
+  and the HTML one `nothing to update`; there is now one message, from one place.
+
+### Fixed
 
 `v2.0.0` was tagged, released on GitHub, and never reached npm. The publish
 workflow gated every npm step on an `NPM_PUBLISH` repository variable that was
 never set, so all four steps skipped and the run went **green** — a passing check
 over a publish that did not happen. npm stayed on 1.0.0, which means everything
 installing septic kept the three security fixes 2.0.0 carries.
-
-### Fixed
 
 - **`publish.yml` publishes.** The `NPM_PUBLISH` gate is gone; a `v*` tag now
   runs the npm steps unconditionally, so a publish that cannot happen fails the

@@ -196,6 +196,20 @@ const { app, db } = createServer(config)  // schema up, routes mounted — it ne
 app.listen(3000)                          // the port is yours
 ```
 
+An application with its own routes — an admin panel, a CMS — wants the layer under the API, not the API. `createStore` is it: the same calls the REST router makes, without the HTTP round trip to your own database.
+
+```js
+import { prepareDb, createStore } from 'septic'
+
+const { db, resources } = prepareDb(config)
+const store = createStore(db, resources)
+
+store.posts.list({ user, where: { status: 'published' }, limit: 20 })
+store.posts.create({ title: 'Hello' }, { user })
+```
+
+**It enforces what the API enforces** — `access` per call, `fieldAccess` per field, reads shaped to the declared fields, `expand` obeying the target's own read rule. `user` is yours to pass; leaving it out reads as anonymous, so a forgotten argument denies rather than opens. Failures throw (`ValidationError`, `AccessError`, `NotFoundError`, `ConflictError`), each carrying a `.status`.
+
 Also exported: `prepareDb`, `build`, `toMarkup`, `emitForms`, `formHtml`, `parseResource`, `parseResources`, `openDb` — [the reference lists what each returns](https://stamat.info/septic/docs/).
 
 ---

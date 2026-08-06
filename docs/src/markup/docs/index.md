@@ -61,5 +61,37 @@ app.listen(3000)
 | `formHtml(resource, spec?, { db, values, errors, id })` | one `<form>` as a string |
 | `parseResource(name, def)` / `parseResources(defs)` | the field DSL → resource descriptors |
 | `openDb(path)` | the raw better-sqlite3 handle (WAL, FKs on) |
+| `createStore(db, resources)` | `{ [resource]: operations }` — the data layer, below |
+| `resourceStore(db, resource, all?)` | one resource's operations |
 
 This is the surface laxative composes; it is public and versioned, so build on it rather than on `lib/*` paths.
+
+## The data layer
+
+An application with its own routes — an admin panel, a CMS — needs what sits *under* the REST API, not the API itself. Reaching your own database over HTTP to satisfy your own request handler is a round trip that buys nothing.
+
+```js
+import { prepareDb, createStore } from 'septic'
+
+const { db, resources } = prepareDb(config)
+const store = createStore(db, resources)
+
+store.posts.list({ user, where: { status: 'published' }, sort: 'created', order: 'desc' })
+store.posts.create({ title: 'Hello', slug: 'hello' }, { user })
+```
+
+| Operation | Notes |
+|-----------|-------|
+| `list({ user, where, limit, offset, sort, order, expand })` | `where` is equality on declared columns; unknown keys are ignored. No 200 cap — that clamp guards an untrusted query string, which is the router's boundary, not yours |
+| `count({ user, where })` | the same rule as `list` |
+| `get(id, { user, expand })` | throws `NotFoundError` rather than returning null |
+| `raw(id, { user })` | the stored row, undeclared columns and all — for a caller that owns the table and needs a column the config does not declare |
+| `create(data, { user })` | returns the new row, shaped |
+| `update(id, data, { user, partial })` | `partial: true` touches only what it was given |
+| `remove(id, { user })` | `true`, or `NotFoundError` |
+
+**The rules are the same ones the API applies**, because the router calls exactly these methods: `access.read`/`access.write` per call, `fieldAccess` per field (an unwritable field is dropped, so the rest of the edit survives), reads shaped to the declared fields — an undeclared column stays in the database — and `expand` obeying the referenced resource's own read rule.
+
+`user` is the one thing you pass. Omit it and the call reads as anonymous, which `allows` denies for anything not declared `"public"`, so a forgotten argument fails closed. `raw` is the deliberate exception to the shaping, named rather than a flag, so nobody reaches it by accident.
+
+Failures throw, each carrying a `.status` the caller can map: `ValidationError` (422, with an `errors` map of every field that failed), `AccessError` (401 anonymous / 403 known user), `NotFoundError` (404), `ConflictError` (409 duplicate, 422 dangling reference).

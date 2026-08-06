@@ -1,4 +1,4 @@
-# 🚽 septic
+# 🚽 septic [![npm version](https://img.shields.io/npm/v/septic)](https://www.npmjs.com/package/septic) [![ci](https://img.shields.io/github/actions/workflow/status/stamat/septic/ci.yml?branch=main&label=ci)](https://github.com/stamat/septic/actions/workflows/ci.yml) [![license mit](https://img.shields.io/badge/license-MIT-green)](https://github.com/stamat/septic/blob/main/LICENSE)
 
 Config-driven backend for the [poops](https://github.com/stamat/poops) ecosystem. One `poops.json`, a `septic` block → SQLite schema + REST CRUD + auth. The backend twin of the poops frontend. (A septic tank is the backend that stores and processes what poops produces.)
 

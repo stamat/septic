@@ -33,7 +33,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: script/bootstrap
+        run: npm install
 
       # Pages serves the site from /septic, not the domain root, so every
       # generated link has to carry that prefix.

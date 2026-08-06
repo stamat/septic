@@ -105,7 +105,7 @@ Generated routes per resource (only the `methods` you list):
 | GET    | `/api/:resource` (list, `?limit=&offset=`) | `access.read` |
 | GET    | `/api/:resource/:id` | `access.read` |
 | POST   | `/api/:resource` | `access.write` |
-| PUT    | `/api/:resource/:id` (JSON body is partial) | `access.write` |
+| PUT    | `/api/:resource/:id` (JSON body is partial; an explicit `null` clears a nullable field) | `access.write` |
 | PATCH  | `/api/:resource/:id` (partial by definition; mounts with `PUT`) | `access.write` |
 | DELETE | `/api/:resource/:id` | `access.write` |
 
@@ -211,7 +211,7 @@ store.posts.create({ title: 'Hello' }, { user })
 
 **It enforces what the API enforces** — `access` per call, `fieldAccess` per field, reads shaped to the declared fields, `expand` obeying the target's own read rule. `user` is yours to pass; leaving it out reads as anonymous, so a forgotten argument denies rather than opens. Failures throw (`ValidationError`, `AccessError`, `NotFoundError`, `ConflictError`), each carrying a `.status`.
 
-Also exported: `prepareDb`, `build`, `toMarkup`, `emitForms`, `formHtml`, `parseResource`, `parseResources`, `openDb` — [the reference lists what each returns](https://stamat.info/septic/docs/).
+Also exported: `prepareDb`, `build`, `toMarkup`, `emitForms`, `formHtml`, `parseResource`, `parseResources`, `openDb`, `hashPassword`/`verifyPassword` (the scrypt pair, for a host keeping its own sessions over septic's users table), `crudRouter` (one resource's REST surface for your own express app) — [the reference lists what each returns](https://stamat.info/septic/docs/).
 
 ---
 

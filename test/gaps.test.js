@@ -77,6 +77,10 @@ test('a datetime is stored in one shape whatever shape the client sent', () => {
   assert.match(fromPicker.created, sql, 'datetime-local "T" shape normalized')
   const fromIso = validateAll(posts, { collection: 1, slug: 'dt2', created: '2026-08-06T10:00:00Z' }).data
   assert.equal(fromIso.created, '2026-08-06 10:00:00', 'an explicit UTC offset is kept as its UTC time')
+  // The storage shape is already UTC: a value read from the database and sent
+  // back must come out identical, not shifted by the server's offset.
+  const roundTrip = validateAll(posts, { collection: 1, slug: 'dt3', created: '2026-08-06 10:00:00' }).data
+  assert.equal(roundTrip.created, '2026-08-06 10:00:00', 'the storage shape did not round-trip unchanged')
 })
 
 test('composite unique: slug unique per collection, not globally', async() => {

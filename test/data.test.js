@@ -139,6 +139,21 @@ test('a partial update touches only what it was given', () => {
   assert.equal(updated.slug, 'partial-update', 'an unsent field was cleared by a partial update')
 })
 
+test("an explicit null clears a nullable field on a partial update; '' leaves it alone", () => {
+  const w = writers.create({ name: 'W' }, { user: editor })
+  const row = posts.create({ title: 'Clearable', slug: 'clearable', author_id: w.id }, { user: editor })
+  const kept = posts.update(row.id, { title: 'Still linked', author_id: '' }, { user: editor, partial: true })
+  assert.equal(kept.author_id, w.id, "'' is a form absence, not a clear")
+  const cleared = posts.update(row.id, { author_id: null }, { user: editor, partial: true })
+  assert.equal(cleared.author_id, null, 'null did not clear the reference')
+})
+
+test('null cannot clear a required field', () => {
+  const row = posts.create({ title: 'Keeps title', slug: 'keeps-title' }, { user: editor })
+  assert.throws(() => posts.update(row.id, { title: null }, { user: editor, partial: true }),
+    { name: 'ValidationError' }, 'a required field accepted null')
+})
+
 test('a duplicate on a unique field is a conflict, not a crash', () => {
   posts.create({ title: 'First', slug: 'taken' }, { user: editor })
   try {

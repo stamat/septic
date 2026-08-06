@@ -29,6 +29,10 @@ carries over into the released heading.
   out of the generated form. A create form need not ask for a `boolean = false` the
   server fills itself — until now the only way out was hiding the row with CSS while
   the widget kept posting.
+- **`hashPassword`, `verifyPassword` and `crudRouter` are package exports.** pooppress
+  keeps its own sessions over septic's users table and had to hold a copy of the scrypt
+  pair to do it; the router export lets a host mount one resource's REST surface inside
+  its own express app without taking all of `createServer`.
 
 ### Fixed
 
@@ -36,6 +40,16 @@ carries over into the released heading.
   `1`/`0`, leaking the storage engine into every client comparison
   (`done === true` never matched). Cast in `hydrateRow`, the one place every read is
   shaped, so lists, single reads and write responses all agree; `null` stays `null`.
+- **A stored datetime round-trips unchanged.** `"YYYY-MM-DD HH:MM:SS"` — septic's own
+  storage shape — was re-parsed in the server's timezone on the way back in, so reading
+  `published_at` and sending it back shifted the value by the server's UTC offset.
+  The storage shape now parses as the UTC it already is; datetime-local and
+  explicit-offset values behave as before.
+- **An explicit `null` clears a nullable field on a partial update.** `null` was read
+  as "not sent" and skipped, which made unscheduling (`published_at: null`) unwritable
+  through a JSON `PUT`/`PATCH` or the store. `null` now writes `NULL` (a required field
+  still errors); `''` stays an absence, because HTML forms post `''` for every input
+  the user merely left empty.
 
 ## [3.0.0] - 2026-08-06 — the data layer, and three majors underneath
 

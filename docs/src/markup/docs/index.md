@@ -63,6 +63,8 @@ app.listen(3000)
 | `openDb(path)` | the raw better-sqlite3 handle (WAL, FKs on) |
 | `createStore(db, resources)` | `{ [resource]: operations }` — the data layer, below |
 | `resourceStore(db, resource, all?)` | one resource's operations |
+| `hashPassword(password)` / `verifyPassword(password, stored)` | the scrypt pair — for a host keeping its own sessions over septic's users table |
+| `crudRouter(db, resource, form?, media?, all?)` | one resource's REST surface, mountable inside your own express app |
 
 This is the surface laxative composes; it is public and versioned, so build on it rather than on `lib/*` paths.
 
@@ -87,7 +89,7 @@ store.posts.create({ title: 'Hello', slug: 'hello' }, { user })
 | `get(id, { user, expand })` | throws `NotFoundError` rather than returning null |
 | `raw(id, { user })` | the stored row, undeclared columns and all — for a caller that owns the table and needs a column the config does not declare |
 | `create(data, { user })` | returns the new row, shaped |
-| `update(id, data, { user, partial })` | `partial: true` touches only what it was given |
+| `update(id, data, { user, partial })` | `partial: true` touches only what it was given; an explicit `null` clears a nullable field (a required one still errors), `''` reads as absence |
 | `remove(id, { user })` | `true`, or `NotFoundError` |
 
 **The rules are the same ones the API applies**, because the router calls exactly these methods: `access.read`/`access.write` per call, `fieldAccess` per field (an unwritable field is dropped, so the rest of the edit survives), reads shaped to the declared fields — an undeclared column stays in the database — and `expand` obeying the referenced resource's own read rule.

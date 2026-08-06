@@ -86,7 +86,7 @@ Resource-level extras: `unique: [["collection","slug"]]` (composite), `indexes: 
 "media": { "dir": "data/uploads", "url": "/uploads", "sizes": [400, 800, 1200] }
 ```
 
-Uploads are stored under `dir`, served at `url`; each `image` also gets a resized variant per width in `sizes` (via `sharp`, loaded lazily). Forms with a file field switch to `multipart/form-data` automatically.
+Uploads are stored under `dir`, served at `url`; each `image` also gets a resized variant per width in `sizes` (via `sharp`, loaded lazily). Forms with a file field switch to `multipart/form-data` automatically. An upload keeps its extension only if it is inline-safe (images, audio, video, `.pdf`, `.txt`, `.zip`); anything script-capable — `.html`, `.svg`, `.js` — is stored extension-less and served as a download, never as a page.
 
 ## Run
 
@@ -117,9 +117,9 @@ Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; 
 | `?limit=&offset=` | paginate (limit capped at 200) |
 | `?sort=<col>&order=asc\|desc` | order by a column (default `id` desc) |
 | `?<col>=value` | equality filter on a real column |
-| `?expand=<refField>[,...]` | inline a `ref:` field's referenced row in place of its id |
+| `?expand=<refField>[,...]` | inline a `ref:` field's referenced row in place of its id — the target must be a configured resource and the caller must pass its `access.read`, else the id stays |
 
-Column names are validated against the schema (no injection); unknown params are ignored.
+Column names are validated against the schema (no injection); unknown params are ignored. Responses carry the `id` plus the fields the config declares — a column septic never declared (a `password_hash` on a served `users` table, say) never leaves the database.
 
 ## The poops bridge
 

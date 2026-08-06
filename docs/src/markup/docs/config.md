@@ -40,9 +40,9 @@ order: 3
 | `?limit=&offset=` | paginate (limit capped at 200) |
 | `?sort=<col>&order=asc\|desc` | order by a column |
 | `?<col>=value` | equality filter |
-| `?expand=<refField>` | inline a `ref:` field's referenced row |
+| `?expand=<refField>` | inline a `ref:` field's referenced row — the target must be a configured resource and the caller must pass its `access.read` |
 
-Column names are checked against the schema; unknown params are ignored.
+Column names are checked against the schema; unknown params are ignored. Responses carry the `id` plus the declared fields — an undeclared column (like `password_hash` on a served `users` table) never leaves the database.
 
 ## Users & auth
 

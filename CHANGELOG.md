@@ -19,6 +19,8 @@ carries over into the released heading.
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-06
+
 ### Added
 
 - **`PATCH /api/:resource/:id`.** Partial by definition, mounted whenever `PUT` is —

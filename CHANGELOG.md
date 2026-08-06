@@ -19,6 +19,24 @@ carries over into the released heading.
 
 ## [Unreleased]
 
+### Added
+
+- **`PATCH /api/:resource/:id`.** Partial by definition, mounted whenever `PUT` is —
+  same guard, same store call. PUT's JSON body was already partial and stays so; PATCH
+  is the verb that says it out loud, so a client no longer needs to know septic's PUT
+  dialect to move one field.
+- **`exclude: true` in a form hint.** The mirror of `include: true`: leaves any field
+  out of the generated form. A create form need not ask for a `boolean = false` the
+  server fills itself — until now the only way out was hiding the row with CSS while
+  the widget kept posting.
+
+### Fixed
+
+- **Boolean fields come back from the API as `true`/`false`.** They were SQLite's
+  `1`/`0`, leaking the storage engine into every client comparison
+  (`done === true` never matched). Cast in `hydrateRow`, the one place every read is
+  shaped, so lists, single reads and write responses all agree; `null` stays `null`.
+
 ## [3.0.0] - 2026-08-06 — the data layer, and three majors underneath
 
 ### Added

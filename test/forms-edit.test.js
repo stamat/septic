@@ -95,7 +95,7 @@ test('unchecking a checkbox on the edit form turns the boolean off', async() => 
     headers: { 'content-type': 'application/json', cookie },
     body: JSON.stringify({ featured: true })
   })
-  assert.equal((await json(`/api/posts/${id}`)).featured, 1)
+  assert.equal((await json(`/api/posts/${id}`)).featured, true)
   // A real unchecked submit: only the hidden 0 posts.
   const res = await fetch(at(`/api/posts/${id}`), {
     method: 'PUT',
@@ -103,7 +103,7 @@ test('unchecking a checkbox on the edit form turns the boolean off', async() => 
     body: 'title=First&slug=first&featured=0'
   })
   assert.equal(res.status, 200)
-  assert.equal((await json(`/api/posts/${id}`)).featured, 0)
+  assert.equal((await json(`/api/posts/${id}`)).featured, false)
 })
 
 test('a checked checkbox posts ["0","1"] over its hidden fallback and stays on', async() => {
@@ -113,7 +113,7 @@ test('a checked checkbox posts ["0","1"] over its hidden fallback and stays on',
     body: 'title=First&slug=first&featured=0&featured=1'
   })
   assert.equal(res.status, 200)
-  assert.equal((await json(`/api/posts/${id}`)).featured, 1)
+  assert.equal((await json(`/api/posts/${id}`)).featured, true)
 })
 
 test('native edit via _method=PUT override, valid → 303 redirect', async() => {

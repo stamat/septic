@@ -24,7 +24,7 @@ const config = {
       }
     },
     authors: { methods: ['GET'], access: { read: 'public' }, fields: { name: 'string required' } },
-    drafts: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { note: 'string' } }
+    drafts: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { note: 'string', done: 'boolean = false' } }
   }
 }
 
@@ -86,6 +86,27 @@ test('CRUD roundtrip as admin, defaults applied, public read', async() => {
   res = await fetch(url(`/api/posts/${post.id}`), { method: 'DELETE', headers: h })
   assert.equal(res.status, 204)
   assert.equal((await fetch(url(`/api/posts/${post.id}`))).status, 404)
+})
+
+test('PATCH moves only the fields it names and leaves the rest standing', async() => {
+  const h = await authed()
+  let res = await fetch(url('/api/posts'), { method: 'POST', headers: h, body: JSON.stringify({ title: 'Patchable', slug: 'patchable' }) })
+  const post = await res.json()
+  res = await fetch(url(`/api/posts/${post.id}`), { method: 'PATCH', headers: h, body: JSON.stringify({ status: 'published' }) })
+  assert.equal(res.status, 200)
+  const patched = await res.json()
+  assert.equal(patched.status, 'published')
+  assert.equal(patched.title, 'Patchable', 'a field PATCH never named must not move')
+  await fetch(url(`/api/posts/${post.id}`), { method: 'DELETE', headers: h })
+})
+
+test('a boolean field arrives as true or false in JSON, never SQLite\'s 1 and 0', async() => {
+  let res = await fetch(url('/api/drafts'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note: 'bool check', done: true }) })
+  assert.equal(res.status, 201)
+  const row = await res.json()
+  assert.equal(row.done, true, 'a stored true came back as something other than boolean true')
+  res = await fetch(url('/api/drafts'), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ note: 'default check' }) })
+  assert.equal((await res.json()).done, false, 'the applied default came back as something other than boolean false')
 })
 
 test('validation: bad enum and bad slug → 422', async() => {

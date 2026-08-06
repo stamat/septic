@@ -72,7 +72,7 @@ The schema is stricter than the parser in one place, on purpose: `"string ="` pa
 
 `"<type>[ flag]... [ = default]"`
 
-- **types:** `string` `text` `slug` `email` `integer` `boolean` `datetime` `json` `file` `image` `enum(a,b,c)` `ref:<resource>`
+- **types:** `string` `text` `slug` `email` `integer` `boolean` `datetime` `json` `file` `image` `enum(a,b,c)` `ref:<resource>` — `boolean` is stored as SQLite `0`/`1` and comes back from the API as `true`/`false`
 - **flags:** `required` `unique` `ondelete=cascade|setnull|restrict` (ref only)
 - **default:** `= value` — `= now` fills a `datetime` at insert; `= now!` also re-stamps it on every update (an `updated_at`)
 
@@ -105,7 +105,8 @@ Generated routes per resource (only the `methods` you list):
 | GET    | `/api/:resource` (list, `?limit=&offset=`) | `access.read` |
 | GET    | `/api/:resource/:id` | `access.read` |
 | POST   | `/api/:resource` | `access.write` |
-| PUT    | `/api/:resource/:id` (partial) | `access.write` |
+| PUT    | `/api/:resource/:id` (JSON body is partial) | `access.write` |
+| PATCH  | `/api/:resource/:id` (partial by definition; mounts with `PUT`) | `access.write` |
 | DELETE | `/api/:resource/:id` | `access.write` |
 
 Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"`, a role name, or a list of roles (`["editor","admin"]`); `admin` passes everything. Sessions are stateless signed cookies — **set `SEPTIC_SECRET` in production**, or the key is random per boot and every restart logs everyone out.
@@ -162,7 +163,7 @@ Add a `build.forms` block and `septic build` emits an HTML `<form>` per resource
 }
 ```
 
-Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:x`→`<select>` from the DB, `email`→`type=email`, `boolean`→checkbox, `integer`→`type=number`. `id` and `datetime = now` fields are omitted (server-owned).
+Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:x`→`<select>` from the DB, `email`→`type=email`, `boolean`→checkbox, `integer`→`type=number`. `id` and `datetime = now` fields are omitted (server-owned); a hint's `include: true` forces one back in, and `exclude: true` leaves any field out — a create form need not ask for a `boolean = false` the server fills itself.
 
 **And they work.** The create route content-negotiates:
 

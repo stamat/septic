@@ -223,6 +223,10 @@
           "type": "boolean",
           "description": "Ask for a field the form would otherwise own — a `datetime = now`, say."
         },
+        "exclude": {
+          "type": "boolean",
+          "description": "Leave the field out of the form — a default the server applies, like `boolean = false` on a create form, needs no widget."
+        },
         "optionLabel": {
           "type": "string",
           "description": "For a `ref:` select, the referenced table's column to show. Falls back to whichever of name, title or slug that table has, then to its id."

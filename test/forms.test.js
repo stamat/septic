@@ -49,6 +49,13 @@ test('a checkbox renders over a hidden 0, so unchecking it posts a value', () =>
   assert.match(formHtml(r), /<input type="hidden" name="featured" value="0"><input id="flags-featured" name="featured" type="checkbox" value="1">/)
 })
 
+test('an exclude hint leaves the field out entirely — no widget, no hidden input', () => {
+  const r = parseResource('todos', { fields: { title: 'string required', done: 'boolean = false' } })
+  const html = formHtml(r, { hints: { done: { exclude: true } } })
+  assert.doesNotMatch(html, /name="done"/, 'an excluded field still rendered an input')
+  assert.match(html, /name="title"/)
+})
+
 test('validationMessage maps native validity → a message (no rules duplicated)', () => {
   assert.match(validationMessage({ valueMissing: true }, { label: 'Email' }), /Email is required/)
   assert.match(validationMessage({ typeMismatch: true }, { label: 'Email' }), /not valid/)

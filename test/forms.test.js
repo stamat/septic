@@ -38,6 +38,11 @@ test('email field → native type="email" (client validation for free)', () => {
   assert.match(formHtml(r), /<input id="contacts-email" name="email" type="email" required>/)
 })
 
+test('a checkbox renders over a hidden 0, so unchecking it posts a value', () => {
+  const r = parseResource('flags', { fields: { featured: 'boolean = false' } })
+  assert.match(formHtml(r), /<input type="hidden" name="featured" value="0"><input id="flags-featured" name="featured" type="checkbox" value="1">/)
+})
+
 test('validationMessage maps native validity → a message (no rules duplicated)', () => {
   assert.match(validationMessage({ valueMissing: true }, { label: 'Email' }), /Email is required/)
   assert.match(validationMessage({ typeMismatch: true }, { label: 'Email' }), /not valid/)

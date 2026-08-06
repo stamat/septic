@@ -15,7 +15,7 @@ const config = {
     posts: {
       methods: ['GET', 'POST', 'PUT'],
       access: { read: 'public', write: 'admin' },
-      fields: { title: 'string required', slug: 'slug unique', body: 'text', created: 'datetime = now' }
+      fields: { title: 'string required', slug: 'slug unique', body: 'text', featured: 'boolean = false', created: 'datetime = now' }
     }
   },
   build: { forms: { posts: { into: 'x' } } }
@@ -86,6 +86,34 @@ test('edit submit (HTMX PUT), valid → saved, and created is NOT reset', async(
   const after = await json(`/api/posts/${id}`)
   assert.equal(after.title, 'Edited')
   assert.equal(after.created, before.created)   // datetime = now not clobbered on edit
+})
+
+test('unchecking a checkbox on the edit form turns the boolean off', async() => {
+  // On first, via JSON partial PUT.
+  await fetch(at(`/api/posts/${id}`), {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json', cookie },
+    body: JSON.stringify({ featured: true })
+  })
+  assert.equal((await json(`/api/posts/${id}`)).featured, 1)
+  // A real unchecked submit: only the hidden 0 posts.
+  const res = await fetch(at(`/api/posts/${id}`), {
+    method: 'PUT',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie, 'HX-Request': 'true' },
+    body: 'title=First&slug=first&featured=0'
+  })
+  assert.equal(res.status, 200)
+  assert.equal((await json(`/api/posts/${id}`)).featured, 0)
+})
+
+test('a checked checkbox posts ["0","1"] over its hidden fallback and stays on', async() => {
+  const res = await fetch(at(`/api/posts/${id}`), {
+    method: 'PUT',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie, 'HX-Request': 'true' },
+    body: 'title=First&slug=first&featured=0&featured=1'
+  })
+  assert.equal(res.status, 200)
+  assert.equal((await json(`/api/posts/${id}`)).featured, 1)
 })
 
 test('native edit via _method=PUT override, valid → 303 redirect', async() => {

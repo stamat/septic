@@ -53,6 +53,14 @@ option, a different default, an error that is now thrown, output that moved.
   in responses, declare them; if you expand a ref, the target must be a
   configured resource.
 
+### Fixed
+
+- **A checkbox can now be unchecked on an edit form.** An unchecked checkbox is
+  absent from an HTML submit, and the edit path deliberately leaves omitted
+  fields alone — so once a boolean was on, no form could turn it off. The
+  rendered checkbox now sits over a hidden `value="0"` input: unchecked posts
+  the 0, checked posts both and the validator takes the last value.
+
 ### Added
 
 - **A misspelt key in the `septic` block is now named when the config loads.**

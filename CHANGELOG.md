@@ -14,6 +14,20 @@ option, a different default, an error that is now thrown, output that moved.
 
 ## [Unreleased]
 
+### Security
+
+- **A read returns only the `id` and the fields the config declares — and
+  `?expand=` now obeys the target's own read rule.** Both read paths used
+  `SELECT *`, so a column septic never declared rode along in responses. The
+  worst case was real, not hypothetical: serve or reference the `users` table
+  and every read of it shipped `password_hash` — expanding a `ref:users` field
+  on a public resource handed it to anonymous callers. Now rows are shaped to
+  the declared fields, and expanding a ref means passing the referenced
+  resource's `access.read`; a ref into a table the config does not serve stays
+  an id for everyone. Upgrading: if you relied on undeclared columns appearing
+  in responses, declare them; if you expand a ref, the target must be a
+  configured resource.
+
 ### Added
 
 - **A misspelt key in the `septic` block is now named when the config loads.**

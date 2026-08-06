@@ -16,10 +16,18 @@ const wipe = () => ['', '-wal', '-shm'].forEach((s) => rmSync(DB + s, { force: t
 
 // septic config mirroring pooppress's real column names. No unique/index here —
 // pooppress's own migration already created them (incl. the COALESCE index).
+// users is declared so posts can expand author_id: expansion follows the
+// target's read rule, and only declared fields come out — password_hash has no
+// way into a response.
 const config = {
   dbPath: DB,
   auth: {},
   resources: {
+    users: {
+      methods: ['GET'],
+      access: { read: 'public', write: 'admin' },
+      fields: { display_name: 'string', email: 'email' }
+    },
     collections: {
       access: { read: 'public', write: 'admin' },
       fields: { name: 'string required', slug: 'slug required' }
@@ -100,4 +108,5 @@ test('query + expand work over the real schema', async() => {
   const [row] = await (await fetch(at('/api/posts?status=published&limit=1&expand=author_id'))).json()
   assert.equal(typeof row.author_id, 'object')
   assert.equal(row.author_id.email, 'admin@t.dev')
+  assert.equal(row.author_id.password_hash, undefined, 'an expanded user must not carry password_hash')
 })

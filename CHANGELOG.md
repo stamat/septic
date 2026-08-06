@@ -24,6 +24,11 @@ option, a different default, an error that is now thrown, output that moved.
   is not JSON. All of them now read as "no session" and the request proceeds
   anonymously.
 
+- **`?limit=-1` can no longer dump a whole table.** SQLite reads a negative
+  `LIMIT` as "no limit", so the documented cap of 200 had a hole exactly one
+  character wide. `limit` is now clamped to 1–200 and a negative `offset` reads
+  as 0.
+
 - **A read returns only the `id` and the fields the config declares — and
   `?expand=` now obeys the target's own read rule.** Both read paths used
   `SELECT *`, so a column septic never declared rode along in responses. The

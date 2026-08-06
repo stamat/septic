@@ -64,6 +64,18 @@ test('pagination: limit + offset', async() => {
   assert.deepEqual(page.map((r) => r.title), ['Beta'])
 })
 
+test('a negative limit cannot lift the cap — SQLite reads LIMIT -1 as unlimited', async() => {
+  const rows = await get('/api/posts?limit=-1')
+  assert.ok(rows.length >= 1 && rows.length <= 200, `got ${rows.length} rows`)
+  const one = await get('/api/posts?limit=-5')
+  assert.equal(one.length, 1, 'clamped to the floor of 1, not passed to SQL')
+})
+
+test('a negative offset reads as 0, not as SQL', async() => {
+  const rows = await get('/api/posts?sort=title&order=asc&limit=1&offset=-3')
+  assert.deepEqual(rows.map((r) => r.title), ['Alpha'])
+})
+
 test('expand: ref id → the referenced row', async() => {
   const [row] = await get('/api/posts?sort=title&order=asc&limit=1&expand=author')
   assert.equal(typeof row.author, 'object')

@@ -77,6 +77,26 @@ test('build regenerates clean — deleted rows leave no orphan files', async() =
   assert.deepEqual(readdirSync(dir), ['hello-world.md'])
 })
 
+test('a slug with a path in it cannot write outside the emit dir', async() => {
+  const ROOT2 = new URL('./tmp-traverse/', import.meta.url).pathname
+  rmSync(ROOT2, { recursive: true, force: true })
+  // spec.slug names a plain string field — nothing upstream vetoed separators.
+  const cfg = {
+    root: ROOT2,
+    dbPath: path.join(ROOT2, 't.db'),
+    auth: {},
+    resources: { pages: { fields: { title: 'string required', body: 'text' } } },
+    build: { resources: { pages: { into: 'out', slug: 'title', body: 'body' } } }
+  }
+  const { db: d } = prepareDb(cfg)
+  d.prepare('INSERT INTO pages (title, body) VALUES (?, ?)').run('../../escape', 'x')
+  await build(cfg, d, { compile: false })
+  d.close()
+  assert.deepEqual(readdirSync(path.join(ROOT2, 'out')), ['escape.md'], 'basename only, inside the dir')
+  assert.equal(existsSync(new URL('./escape.md', import.meta.url).pathname), false, 'nothing written above the emit dir')
+  rmSync(ROOT2, { recursive: true, force: true })
+})
+
 test('build "where" filter emits only matching rows (drafts stay out)', async() => {
   const ROOT2 = new URL('./tmp-where/', import.meta.url).pathname
   rmSync(ROOT2, { recursive: true, force: true })

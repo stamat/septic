@@ -41,6 +41,12 @@ option, a different default, an error that is now thrown, output that moved.
   in the stored metadata; if you need another extension inline, it is a
   one-line addition to `INLINE_EXT` in `lib/media.js`.
 
+- **A build slug cannot write outside its emit directory.** `build.resources.
+  <name>.slug` may name any field, not just a `slug`-typed one — and the value
+  is user-writable data that becomes a filename, so `../../x` in a plain string
+  field escaped `into`. The filename is now `path.basename` of the value; a
+  slug-typed field was and remains safe by its own grammar.
+
 - **A read returns only the `id` and the fields the config declares — and
   `?expand=` now obeys the target's own read rule.** Both read paths used
   `SELECT *`, so a column septic never declared rode along in responses. The

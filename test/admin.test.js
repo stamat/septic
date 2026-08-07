@@ -138,7 +138,7 @@ test('a create notifies the webhook with the event, the resource and the row', a
   const seen = hooked.length
   await fetch(url('/api/posts'), { method: 'POST', headers: { 'content-type': 'application/json', cookie }, body: JSON.stringify({ title: 'Hooked' }) })
   // Fire-and-forget: give the loopback POST a moment to land.
-  await new Promise((r) => setTimeout(r, 300))
+  await new Promise((resolve) => setTimeout(resolve, 300))
   const hit = hooked.slice(seen).find((h) => h.row?.title === 'Hooked')
   assert.ok(hit, 'the webhook never heard about the create')
   assert.equal(hit.event, 'create')

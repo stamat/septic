@@ -17,7 +17,9 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased] — the walls around an MVP
+## [Unreleased]
+
+## [3.2.0] - 2026-08-07 — the walls around an MVP
 
 ### Added
 

@@ -25,7 +25,29 @@
           "description": "One entry per table, keyed by resource name. The name becomes the table and the `/api/<name>` route.",
           "additionalProperties": { "$ref": "#/definitions/resource" }
         },
-        "build": { "$ref": "#/definitions/build" }
+        "build": { "$ref": "#/definitions/build" },
+        "notify": { "$ref": "#/definitions/notify" }
+      }
+    },
+
+    "notify": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url"],
+      "description": "POST a JSON {event, resource, row} to a webhook after a successful HTTP write. Fire-and-forget: a failed notification warns and never fails the write.",
+      "properties": {
+        "url": { "type": "string", "description": "The webhook endpoint — Slack, ntfy, a mail API, anything that takes a POST." },
+        "events": {
+          "type": "array",
+          "items": { "enum": ["create", "update", "delete"] },
+          "description": "Which writes notify. Defaults to [\"create\"] — the form-landed case; update and delete opt in by name."
+        },
+        "resources": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Which resources notify. Absent means all of them."
+        },
+        "timeout": { "type": "integer", "minimum": 1, "description": "Milliseconds before an unanswered webhook is abandoned. Default 5000." }
       }
     },
 

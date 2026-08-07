@@ -67,3 +67,9 @@ test('leaves the rest of poops.json to poops, sharing the file being the whole p
   const shared = { ...VALID, styles: [{ in: 'src/a.scss', out: 'dist/a.css' }], stlyes: [] }
   assert.deepEqual(warningsFrom(shared), [])
 })
+
+test('the notify block survives loading — a config key the server reads must reach the server', () => {
+  const dir = write({ septic: { db: 'x.db', resources: {}, notify: { url: 'https://hook.example/x' } } })
+  const loaded = loadConfig(dir)
+  assert.equal(loaded.notify?.url, 'https://hook.example/x', 'loadConfig dropped the notify block on the floor')
+})

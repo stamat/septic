@@ -15,6 +15,8 @@ order: 3
 - **flags:** `required` `unique` `ondelete=cascade|setnull|restrict` (ref only)
 - **default:** `= value` — `= now` fills a `datetime` at insert; `= now!` also re-stamps it on every update (an `updated_at`)
 
+Changing fields against a live database: an added field becomes a column in place; a removed or renamed field leaves its old column behind, named in a startup warning and never dropped — a rename still needs a real migration. `boolean` is stored as SQLite `0`/`1` and comes back from the API as `true`/`false`.
+
 ## Resource options
 
 ```json

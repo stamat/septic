@@ -141,3 +141,34 @@ test('extensible users: config can add columns to the auth users table', () => {
   d.close(); wipe()
   for (const c of ['email', 'password_hash', 'role', 'display_name', 'avatar_url']) assert.ok(cols.includes(c), `missing ${c}`)
 })
+
+test('a column no field declares warns as drift, keeps its data, and auth-owned users columns stay exempt', () => {
+  wipe()
+  const first = prepareDb({
+    dbPath: DB,
+    auth: {},
+    resources: { notes: { fields: { text: 'string', mood: 'string' } } }
+  })
+  first.db.prepare("INSERT INTO notes (text, mood) VALUES ('kept', 'grim')").run()
+  first.db.close()
+
+  const warned = []
+  const original = console.warn
+  console.warn = (msg) => warned.push(String(msg))
+  let second
+  try {
+    // `mood` is gone from the config — the column it made must be named, not dropped.
+    second = prepareDb({
+      dbPath: DB,
+      auth: {},
+      resources: { notes: { fields: { text: 'string' } } }
+    })
+  } finally {
+    console.warn = original
+  }
+  const row = second.db.prepare('SELECT mood FROM notes').get()
+  second.db.close(); wipe()
+  assert.ok(warned.some((w) => w.includes('"mood"') && w.includes('no field declares')), `drift went unnamed: ${warned.join(' | ')}`)
+  assert.ok(!warned.some((w) => w.includes('password_hash')), 'an auth-owned users column warned as drift')
+  assert.equal(row.mood, 'grim', 'the undeclared column lost its data')
+})

@@ -2,7 +2,7 @@
 
 Config-driven backend for the [poops](https://github.com/stamat/poops) ecosystem. One `poops.json`, a `septic` block → SQLite schema + REST CRUD + auth. The backend twin of the poops frontend. (A septic tank is the backend that stores and processes what poops produces.)
 
-> **Status.** Stable — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. No migrations, no realtime, no admin UI, no plugin system; [CHANGELOG.md](CHANGELOG.md) has the current version and the limits, [CONTRIBUTING.md](CONTRIBUTING.md) says which of them are refusals. Full reference: [stamat.info/septic](https://stamat.info/septic/).
+> **Status.** Stable — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. No migrations (columns are added in place, and a column no field declares warns as drift), no realtime, no admin dashboard (the negotiated list and edit forms below are as far as that goes), no plugin system; [CHANGELOG.md](CHANGELOG.md) has the current version and the limits, [CONTRIBUTING.md](CONTRIBUTING.md) says which of them are refusals. Full reference: [stamat.info/septic](https://stamat.info/septic/).
 
 ## Why it exists
 
@@ -176,6 +176,20 @@ Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:x`�
 ### Editing
 
 `GET /api/:resource/:id`, as someone allowed to write it and wanting HTML, returns the row as a **prefilled edit form**. It submits with PUT — HTMX via `hx-put`, or no-JS via `POST` + a hidden `_method=PUT` the server honours. Editing never re-applies defaults, so a `datetime = now` (or any server-owned field) survives; clearing a required field still errors.
+
+### The negotiated admin
+
+The same negotiation, one level up: `GET /api/:resource`, as someone allowed to write it and wanting HTML, returns the rows as a **table** — each id linking its edit form, prev/next when a page fills, the create form underneath. An API client on the same URL keeps its JSON array; there is no separate admin app, no route added, no build step.
+
+The door into it: an anonymous **browser** on any denied route is redirected to `GET /api/_auth/login` — a plain login form that posts back, sets the session cookie, and returns the browser to where it was going (`next` accepts only same-origin relative paths, so it cannot be aimed off-site). JSON clients keep their `401`. There is deliberately no signup page beside it: users come from the seed or the users table, and public registration is an application decision — roles, verification, abuse — not a default a backend ships turned on.
+
+### Notify
+
+```json
+"notify": { "url": "https://ntfy.sh/my-topic", "events": ["create"], "resources": ["messages"] }
+```
+
+After a successful HTTP write, septic POSTs `{event, resource, row}` to the URL — Slack, ntfy, a mail API, anything with a webhook is one config line, which is the "email me when the form lands" feature without septic owning an SMTP client or a deliverability problem. `events` defaults to `["create"]`; `resources` absent means all; `timeout` (ms, default 5000) bounds an unanswered call. Fire-and-forget: a failed notification warns in the log and never fails the write it reports. The row in the payload is shaped exactly as the writer saw it — point the URL only at an endpoint you trust with your data.
 
 ### Progressive validation
 

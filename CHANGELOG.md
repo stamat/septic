@@ -17,7 +17,27 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased]
+## [Unreleased] — the walls around an MVP
+
+### Added
+
+- **The negotiated admin list.** `GET /api/:resource` for a writer wanting HTML is now
+  a table — each id linking the edit form that already shipped, pagination when a page
+  fills, the create form underneath. API clients keep the JSON array. Not a dashboard
+  app, and not becoming one: one more content negotiation on a route that existed.
+- **A login page, and the redirect into it.** An anonymous browser on a denied route
+  303s to `GET /api/_auth/login?next=…`; the form posts back, sets the cookie, and
+  returns the browser to where it was going. `next` accepts only same-origin relative
+  paths — an absolute or `//host` value falls back to `/`, so it cannot be aimed
+  off-site. JSON clients keep their `401`/`403`. No signup page, on purpose: public
+  registration is an application decision, not a backend default.
+- **`notify` — a webhook on writes.** `{ "url": …, "events": ["create"] }` POSTs
+  `{event, resource, row}` after a successful HTTP write. The "email me when the form
+  lands" feature without an SMTP dependency: any webhook bridge is one config line.
+  Fire-and-forget with a bounded timeout; a failed call warns and never fails the write.
+- **Schema drift warns.** A table column no field declares — what a removed or renamed
+  field leaves behind — is named at startup and left alone. Data is never dropped; a
+  rename still needs a real migration, but it no longer reads as "my data vanished".
 
 ## [3.1.0] - 2026-08-06
 

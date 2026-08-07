@@ -37,6 +37,20 @@ Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:`→
 
 `GET /api/:resource/:id` as a writer wanting HTML returns a prefilled edit form (PUT via HTMX `hx-put`, or POST + `_method=PUT` for no-JS). Editing never re-applies defaults, so `created` survives.
 
+### The negotiated admin
+
+One level up, the same trade: `GET /api/:resource` as a writer wanting HTML is a **table** — each id linking its edit form, prev/next when a page fills, the create form underneath. An API client on the same URL keeps its JSON array. No separate admin app, no extra route.
+
+The door into it: an anonymous **browser** on a denied route is redirected to `GET /api/_auth/login` — a login form that sets the session cookie and returns the browser to where it was going (`next` accepts only same-origin relative paths). JSON clients keep their `401`. No signup page beside it: public registration is an application decision, not a backend default.
+
+### Notify
+
+```json
+"notify": { "url": "https://ntfy.sh/my-topic", "events": ["create"], "resources": ["messages"] }
+```
+
+A successful HTTP write POSTs `{event, resource, row}` to the URL — "email me when the form lands" through any webhook, without septic owning an SMTP client. `events` defaults to `["create"]`; `resources` absent means all; `timeout` (ms, default 5000). Fire-and-forget: a failed call warns and never fails the write.
+
 ### Progressive validation
 
 Native HTML5 validation fires from the emitted attributes with no JS. Include `assets/septic-forms.js` and those same native checks drive styled inline messages — no rules duplicated. The server (`validate.js`) stays the authority.

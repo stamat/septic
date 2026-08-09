@@ -49,9 +49,9 @@ npx septic serve      # http://localhost:3000
 # add
 curl -X POST localhost:3000/api/todos \
   -H 'content-type: application/json' -d '{"title":"buy milk"}'
-# → { "id": 1, "title": "buy milk", "done": 0, "created": "...", "updated": "..." }
+# → { "id": 1, "title": "buy milk", "done": false, "created": "...", "updated": "..." }
 
-# list the open ones (booleans store as 0/1)
+# list the open ones — stored as 0/1, so the filter takes 0; the response says false
 curl 'localhost:3000/api/todos?done=0&sort=created&order=desc'
 
 # mark done — updated re-stamps automatically

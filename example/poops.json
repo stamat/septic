@@ -35,7 +35,7 @@
     },
     "build": {
       "resources": {
-        "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html" }
+        "posts": { "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post" }
       },
       "forms": {
         "posts": {

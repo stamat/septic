@@ -17,7 +17,31 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased]
+## [Unreleased] — the bridge example never built
+
+Every place the poops bridge was documented — README, the Forms page, the blog
+how-to, `example/poops.json` — named the layout as `"post.html"`. poops appends
+the extension itself, so that asked for `post.html.html` and nothing rendered.
+The blog how-to's layout would not have worked even with the name fixed: it
+printed `{{ content }}`, which is not a variable.
+
+### Fixed
+
+- **`layout` takes the name without an extension.** `"layout": "post"`
+  everywhere, and the README now says why: poops turns the front-matter value
+  into an `extends` of `post.html`.
+- **The blog how-to's layout renders the post.** A `content` block in place of
+  `{{ content }}`, a full document rather than a fragment, and the
+  `_layouts`/`_partials` `includePaths` the example needs and never mentioned.
+  The `<time>` carries a machine-readable `datetime` beside the human date, and
+  the sample post body starts at `##` because the layout owns the `<h1>`.
+- **The todo how-to showed `"done": 0` in a response.** Booleans are stored as
+  `0`/`1` and come back from the API as `true`/`false` — as the field DSL page
+  and the README both already said.
+- **The Quick start route table lists `PATCH`.** It mounts with `PUT` and needs
+  no `methods` entry; only the README said so.
+- **Two documented defaults that were missing.** `?limit=` defaults to 50 before
+  the 200 cap, and form generation omits `= now!` fields as well as `= now`.
 
 ## [3.2.0] - 2026-08-07 — the walls around an MVP
 

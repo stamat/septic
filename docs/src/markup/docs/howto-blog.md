@@ -47,7 +47,7 @@ The blog is what septic is *for*: posts live in a database, and `septic build` t
       "into": "src/markup/posts",
       "slug": "slug",
       "body": "body",
-      "layout": "post.html",
+      "layout": "post",
       "where": { "status": "published" }
     }
   }
@@ -65,7 +65,7 @@ curl -c jar -X POST localhost:3000/api/_auth/login \
   -H 'content-type: application/json' -d '{"email":"you@example.com","password":"changeme"}'
 # publish one
 curl -b jar -X POST localhost:3000/api/posts -H 'content-type: application/json' \
-  -d '{"title":"Hello","slug":"hello","body":"# Hi\n\nFirst post.","status":"published","published_at":"2026-08-05 12:00:00"}'
+  -d '{"title":"Hello","slug":"hello","body":"## Hi\n\nFirst post.","status":"published","published_at":"2026-08-05 12:00:00"}'
 ```
 
 ## 4. Build the static site
@@ -74,18 +74,24 @@ curl -b jar -X POST localhost:3000/api/posts -H 'content-type: application/json'
 npx septic build      # published posts → src/markup/posts/*.md → poops → dist/
 ```
 
-A `post.html` layout renders each post; a `posts/index.html` lists the collection — that part is [poops](https://stamat.info/poops), the static-site generator. A minimal layout:
+A layout renders each post; a `posts/index.html` lists the collection — that part is [poops](https://stamat.info/poops), the static-site generator. Put it at `src/markup/_layouts/post.html` and add `"options": { "includePaths": ["_layouts", "_partials"] }` to your `markup` block: poops skips `_`-prefixed directories when rendering pages and will not search them for layouts or includes unless they are on the engine's paths.
 
 {% raw %}
 ```html
-<!-- post.html -->
-<article>
-  <h1>{{ page.title }}</h1>
-  <time>{{ page.published_at }}</time>
-  {{ content }}
-</article>
+<!-- _layouts/post.html -->
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>{{ page.title }}</title></head>
+<body>
+  <article>
+    <h1>{{ page.title }}</h1>
+    <time datetime="{{ page.published_at | date('YYYY-MM-DDTHH:mm:ss') }}">{{ page.published_at | date('D MMMM YYYY') }}</time>
+    {% block content %}{% endblock %}
+  </article>
+</body></html>
 ```
 {% endraw %}
+
+Three things that page depends on: {% raw %}`{% block content %}{% endblock %}` is where the body lands — poops wraps each page's own source in that block and extends the layout, so `{{ content }}` is not a variable and renders nothing{% endraw %}; the `datetime` attribute needs ISO 8601 while septic stores `2026-08-05 12:00:00`, which is what the `date` filter is for; and the layout owns the `<h1>`, so post bodies start at `##`.
 
 ## 5. Author from a form (optional)
 

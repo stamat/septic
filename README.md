@@ -130,14 +130,14 @@ The one thing no other backend does: the same data serves a live API **and** a s
 "build": {
   "resources": {
     "posts": {
-      "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html",
+      "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post",
       "where": { "status": "published" }
     }
   }
 }
 ```
 
-Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter, the `body` field becomes the document body, `layout` is added if named. The directory is septic-owned: only changed files are rewritten (so watchers stay quiet on a no-op build), and a deleted row leaves no orphan file. Then septic runs [poops](https://github.com/stamat/poops) over the same `poops.json` to compile the site.
+Each row → `src/markup/posts/<slug>.md`: every field becomes YAML front matter, the `body` field becomes the document body, `layout` is added if named — with no extension, because poops appends its own (`post` becomes `{% extends 'post.html' %}`, so `post.html` here asks for `post.html.html`). The directory is septic-owned: only changed files are rewritten (so watchers stay quiet on a no-op build), and a deleted row leaves no orphan file. Then septic runs [poops](https://github.com/stamat/poops) over the same `poops.json` to compile the site.
 
 `where` is an optional equality filter — only matching rows are emitted, so a blog keeps its drafts out of the static site while the API still serves them. Multiple keys are ANDed; column names come from your config and values are bound, never interpolated.
 

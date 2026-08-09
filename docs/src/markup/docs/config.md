@@ -39,7 +39,7 @@ Changing fields against a live database: an added field becomes a column in plac
 
 | Param | Effect |
 |-------|--------|
-| `?limit=&offset=` | paginate (limit capped at 200) |
+| `?limit=&offset=` | paginate — 50 by default, capped at 200 |
 | `?sort=<col>&order=asc\|desc` | order by a column |
 | `?<col>=value` | equality filter |
 | `?expand=<refField>` | inline a `ref:` field's referenced row — the target must be a configured resource and the caller must pass its `access.read` |

@@ -23,7 +23,7 @@ A `build.forms` block emits an HTML `<form>` per resource, from the same field D
 }
 ```
 
-Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:`→`<select>` from the DB, `email`→`type=email`, `image`→file input. `id` and `datetime = now` fields are omitted.
+Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:`→`<select>` from the DB, `email`→`type=email`, `image`→file input. `id` is omitted, and so is any field defaulting to `now` — `= now` and `= now!` alike, since both are server-owned. A `hints.<field>.include` puts one back; `hints.<field>.exclude` takes any other field out.
 
 **They work.** The create/update routes content-negotiate:
 
@@ -63,7 +63,7 @@ Native HTML5 validation fires from the emitted attributes with no JS. Include `a
 "build": {
   "resources": {
     "posts": {
-      "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post.html",
+      "into": "src/markup/posts", "slug": "slug", "body": "body", "layout": "post",
       "where": { "status": "published" }
     }
   }

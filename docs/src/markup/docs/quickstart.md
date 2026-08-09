@@ -43,6 +43,7 @@ Generated routes (only the `methods` you list):
 | GET    | `/api/notes/:id` | `access.read` |
 | POST   | `/api/notes` | `access.write` |
 | PUT    | `/api/notes/:id` | `access.write` |
+| PATCH  | `/api/notes/:id` (mounts with `PUT`, so it needs no `methods` entry) | `access.write` |
 | DELETE | `/api/notes/:id` | `access.write` |
 
 Log in with `POST /api/_auth/login {email, password}` (sets a signed session cookie), then write.

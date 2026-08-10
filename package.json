@@ -49,7 +49,7 @@
     "eslint": "^9.39.3",
     "neostandard": "^0.13.0",
     "poops": "^2.1.0",
-    "poops-docs-theme": "^4.0.0"
+    "poops-docs-theme": "^4.0.2"
   },
   "repository": {
     "type": "git",

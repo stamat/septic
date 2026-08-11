@@ -125,3 +125,13 @@ test('native edit via _method=PUT override, valid → 303 redirect', async() => 
   })
   assert.equal(res.status, 303)
 })
+
+test('native edit via a query _method=PUT (what a multipart form uses, since the override cannot read its body) → 303', async() => {
+  const res = await fetch(at(`/api/posts/${id}?_method=PUT`), {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded', cookie, accept: 'text/html' },
+    body: new URLSearchParams({ title: 'Q', slug: 'first' }),
+    redirect: 'manual'
+  })
+  assert.equal(res.status, 303)
+})

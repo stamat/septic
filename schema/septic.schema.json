@@ -56,6 +56,11 @@
       "additionalProperties": false,
       "description": "Sessions are stateless signed cookies. Set SEPTIC_SECRET in production — without it the key is random per boot, so every restart logs everyone out.",
       "properties": {
+        "secureCookies": {
+          "type": "boolean",
+          "description": "Add the Secure flag to the session cookie, so the browser only sends it over HTTPS. Defaults on when NODE_ENV=production; set false only to run the real cookie over plain http (local HTTPS-less testing).",
+          "default": false
+        },
         "seed": {
           "type": "object",
           "additionalProperties": false,

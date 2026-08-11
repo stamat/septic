@@ -109,7 +109,7 @@ Generated routes per resource (only the `methods` you list):
 | PATCH  | `/api/:resource/:id` (partial by definition; mounts with `PUT`) | `access.write` |
 | DELETE | `/api/:resource/:id` | `access.write` |
 
-Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"`, a role name, or a list of roles (`["editor","admin"]`); `admin` passes everything. Sessions are stateless signed cookies — **set `SEPTIC_SECRET` in production**, or the key is random per boot and every restart logs everyone out.
+Auth: `POST /api/_auth/login` `{email, password}` sets a signed session cookie; `POST /api/_auth/logout`. Access rules are `"public"`, a role name, or a list of roles (`["editor","admin"]`); `admin` passes everything. Sessions are stateless signed cookies — **set `SEPTIC_SECRET` in production**, or the key is random per boot and every restart logs everyone out. The cookie is `HttpOnly; SameSite=Lax`, and gains `Secure` when `NODE_ENV=production` (or `auth.secureCookies: true`) so the token never rides a plain-http request — set `auth.secureCookies: false` only to run the real cookie over a local HTTPS-less server.
 
 ### Querying a list
 

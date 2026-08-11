@@ -49,6 +49,12 @@ test('a checkbox renders over a hidden 0, so unchecking it posts a value', () =>
   assert.match(formHtml(r), /<input type="hidden" name="featured" value="0"><input id="flags-featured" name="featured" type="checkbox" value="1">/)
 })
 
+test('an error re-render draws a checked box from the posted ["0","1"] pair', () => {
+  const r = parseResource('flags', { fields: { featured: 'boolean = false' } })
+  const html = formHtml(r, {}, { values: { featured: ['0', '1'] } })
+  assert.match(html, /name="featured" type="checkbox" value="1" checked/)
+})
+
 test('an exclude hint leaves the field out entirely — no widget, no hidden input', () => {
   const r = parseResource('todos', { fields: { title: 'string required', done: 'boolean = false' } })
   const html = formHtml(r, { hints: { done: { exclude: true } } })

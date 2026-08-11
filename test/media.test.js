@@ -4,6 +4,7 @@ import { rmSync, existsSync, readdirSync } from 'node:fs'
 import path from 'node:path'
 import sharp from 'sharp'
 import { createServer } from '../lib/server.js'
+import { saveUpload } from '../lib/media.js'
 
 // v0.3: file/image field types → multipart upload, stored path, image variants.
 const ROOT = new URL('./tmp-media/', import.meta.url).pathname
@@ -94,4 +95,12 @@ test('a harmless extension is kept', async() => {
   const res = await fetch(`${base}/api/attachments`, { method: 'POST', body: fd })
   const row = await res.json()
   assert.match(row.doc, /\.txt$/)
+})
+
+test('an absolute media.url survives — its scheme slashes are not collapsed', async() => {
+  const meta = await saveUpload(
+    { originalname: 'a.txt', mimetype: 'text/plain', size: 3, buffer: Buffer.from('hey') },
+    { dir: UP, url: 'https://cdn.example.com/uploads' }
+  )
+  assert.match(meta.path, /^https:\/\/cdn\.example\.com\/uploads\/[a-f0-9]+\.txt$/)
 })

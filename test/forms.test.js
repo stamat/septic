@@ -76,8 +76,27 @@ test('ref: select options come from the referenced table', () => {
   const { db } = prepareDb({ dbPath: path.join(ROOT, 'r.db'), auth: {}, resources: { authors: { fields: { name: 'string required' } } } })
   db.prepare('INSERT INTO authors (name) VALUES (?)').run('Ada')
   const withRef = parseResource('books', { fields: { title: 'string required', author: 'ref:authors' } })
-  const html = formHtml(withRef, { hints: { author: { optionLabel: 'name' } } }, { db })
+  // `all` lets the select honour the ref target's read rule (authors is public);
+  // without it the target can't be resolved and the select renders no options.
+  const all = { authors: parseResource('authors', { fields: { name: 'string required' } }) }
+  const html = formHtml(withRef, { hints: { author: { optionLabel: 'name' } } }, { db, all })
   assert.match(html, /<select id="books-author"[^>]*>.*<option value="1">Ada<\/option>/s)
+  db.close(); rmSync(ROOT, { recursive: true, force: true })
+})
+
+test('a ref select does not leak rows past the target read rule', () => {
+  // authors is admin-read; an anonymous (build-time) render must not enumerate
+  // its rows into the select — the same gate expand() applies in data.js.
+  const ROOT = new URL('./tmp-forms-secret/', import.meta.url).pathname
+  rmSync(ROOT, { recursive: true, force: true })
+  const { db } = prepareDb({ dbPath: path.join(ROOT, 'r.db'), auth: {}, resources: { authors: { fields: { name: 'string required' }, access: { read: 'admin' } } } })
+  db.prepare('INSERT INTO authors (name) VALUES (?)').run('Ada')
+  const withRef = parseResource('books', { fields: { title: 'string required', author: 'ref:authors' } })
+  const all = { authors: parseResource('authors', { fields: { name: 'string required' }, access: { read: 'admin' } }) }
+  const anon = formHtml(withRef, { hints: { author: { optionLabel: 'name' } } }, { db, all })
+  assert.doesNotMatch(anon, /Ada/)
+  const admin = formHtml(withRef, { hints: { author: { optionLabel: 'name' } } }, { db, all, user: { role: 'admin' } })
+  assert.match(admin, /<option value="1">Ada<\/option>/)
   db.close(); rmSync(ROOT, { recursive: true, force: true })
 })
 

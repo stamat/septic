@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { rmSync } from 'node:fs'
 import path from 'node:path'
 import { prepareDb } from '../lib/server.js'
-import { parseResource } from '../lib/schema.js'
+import { parseResource, parseResources } from '../lib/schema.js'
 import { formHtml } from '../lib/forms.js'
 
 // The 1.0 dogfood: pooppress's whole schema (server/migrations/001-init.sql)
@@ -98,7 +98,10 @@ test('a posts form generates ref selects and the status enum from one config', (
   db.prepare('INSERT INTO collections (name, slug) VALUES (?, ?)').run('Blog', 'blog')
   db.prepare('INSERT INTO users (email, role, password_hash, display_name) VALUES (?, ?, ?, ?)').run('a@t.dev', 'admin', 'x', 'Ada')
   const posts = parseResource('posts', config.resources.posts)
-  const html = formHtml(posts, { hints: { collection: { optionLabel: 'name' }, author: { optionLabel: 'display_name' } } }, { db })
+  // The resource map lets each ref select honour its target's read rule
+  // (collections and users are both public here).
+  const all = Object.fromEntries(parseResources(config.resources).map((r) => [r.name, r]))
+  const html = formHtml(posts, { hints: { collection: { optionLabel: 'name' }, author: { optionLabel: 'display_name' } } }, { db, all })
   assert.match(html, /<select id="posts-collection"[^>]*>.*<option value="1">Blog<\/option>/s)
   assert.match(html, /<select id="posts-author"[^>]*>.*<option value="1">Ada<\/option>/s)
   assert.match(html, /<option value="draft" selected>draft/)

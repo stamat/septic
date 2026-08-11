@@ -133,6 +133,14 @@ test('the schema rejects the field specs that are typos', () => {
   }
 })
 
+test('only "now!" is a touch marker — a literal default keeps a trailing "!"', () => {
+  assert.equal(parseField('updated', 'datetime = now!').touch, true)
+  assert.equal(parseField('updated', 'datetime = now!').default, 'now')
+  const tagline = parseField('tagline', 'string = hi!')
+  assert.equal(tagline.touch, false, 'a value that merely ends in "!" is not server-owned')
+  assert.equal(tagline.default, 'hi!', 'and it keeps its "!"')
+})
+
 // Where the two deliberately disagree, so the divergence is a decision on the
 // record rather than a hole someone finds later.
 test('the schema is stricter than the parser about an empty default', () => {

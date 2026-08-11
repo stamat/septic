@@ -90,14 +90,27 @@ test('a required field with a default is not "required-missing" on an edit', () 
 test('a datetime is stored in one shape whatever shape the client sent', () => {
   const posts = parseResource('posts', config.resources.posts)
   const sql = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/
+  // A naive datetime-local value is read as UTC (the app timezone), not the
+  // server's local zone, so the digits are kept whatever zone the test runs in.
   const fromPicker = validateAll(posts, { collection: 1, slug: 'dt', created: '2026-08-06T12:00' }).data
   assert.match(fromPicker.created, sql, 'datetime-local "T" shape normalized')
+  assert.equal(fromPicker.created, '2026-08-06 12:00:00', 'the wall-clock digits are kept, not shifted by the server offset')
   const fromIso = validateAll(posts, { collection: 1, slug: 'dt2', created: '2026-08-06T10:00:00Z' }).data
   assert.equal(fromIso.created, '2026-08-06 10:00:00', 'an explicit UTC offset is kept as its UTC time')
   // The storage shape is already UTC: a value read from the database and sent
   // back must come out identical, not shifted by the server's offset.
   const roundTrip = validateAll(posts, { collection: 1, slug: 'dt3', created: '2026-08-06 10:00:00' }).data
   assert.equal(roundTrip.created, '2026-08-06 10:00:00', 'the storage shape did not round-trip unchanged')
+})
+
+test('a stored datetime survives the edit-form round-trip unchanged', () => {
+  // The bug C6 fixed: forms.js re-emits a stored "YYYY-MM-DD HH:MM:SS" into a
+  // datetime-local as "…T…"; resubmitting it must not shift by the server offset.
+  const posts = parseResource('posts', config.resources.posts)
+  const stored = '2026-08-06 10:00:00'
+  const asShownInForm = stored.replace(' ', 'T') // what control() renders (forms.js)
+  const resubmitted = validateAll(posts, { collection: 1, slug: 'rt', created: asShownInForm }).data
+  assert.equal(resubmitted.created, stored, 'the edit round-trip must be a no-op, in any server timezone')
 })
 
 test('composite unique: slug unique per collection, not globally', async() => {

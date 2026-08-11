@@ -6,7 +6,12 @@ import sharp from 'sharp'
 import { createServer } from '../lib/server.js'
 import { saveUpload } from '../lib/media.js'
 
-// v0.3: file/image field types → multipart upload, stored path, image variants.
+// v0.3: file/image field types → multipart upload, stored path, image variants,
+// the inline-extension allow-list, absolute media.url joining, a bad image → 422,
+// an unexpected field → 400, and orphan-file rollback on a failed write.
+// Deliberately not covered: sharp's own resize correctness beyond one width
+// check — that is sharp's suite, not septic's; septic pins that a variant is
+// produced at the configured width, not the resampling quality.
 const ROOT = new URL('./tmp-media/', import.meta.url).pathname
 const DB = path.join(ROOT, 'm.db')
 const UP = path.join(ROOT, 'uploads')

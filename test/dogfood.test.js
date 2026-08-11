@@ -8,6 +8,9 @@ import { formHtml } from '../lib/forms.js'
 
 // The 1.0 dogfood: pooppress's whole schema (server/migrations/001-init.sql)
 // expressed as a septic config, and proven to build. See docs/DOGFOOD.md.
+// Deliberately not covered: pooppress's runtime behaviour — this proves the
+// schema and forms express in septic and the tables/FKs/forms come out right,
+// not that the application built on them behaves; that is pooppress's own suite.
 const ROOT = new URL('./tmp-dogfood/', import.meta.url).pathname
 const wipe = () => rmSync(ROOT, { recursive: true, force: true })
 

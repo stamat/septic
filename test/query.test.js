@@ -5,7 +5,10 @@ import { createServer } from '../lib/server.js'
 import { allows } from '../lib/auth.js'
 
 // v0.2: list querying (sort/order/filter over the existing pagination),
-// relation expand, and array access rules.
+// relation expand, and array access rules. Also the filter boundary — boolean
+// coercion and the 422 for a non-scalar (repeated/bracketed) filter key.
+// Deliberately not covered: the store's programmatic surface directly (data.js
+// tests own that) — this exercises the query layer over real HTTP only.
 const DB = new URL('./tmp-query.db', import.meta.url).pathname
 const wipe = () => ['', '-wal', '-shm'].forEach((s) => rmSync(DB + s, { force: true }))
 

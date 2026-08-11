@@ -5,6 +5,9 @@ import { createServer } from '../lib/server.js'
 
 // The one runnable check the spine leaves behind: config → table → CRUD →
 // validate → auth, exercised over real HTTP. If any link breaks, this fails.
+// Deliberately not covered: querying, uploads, forms and the edit round-trip —
+// each is a v0.x layer on top of this spine, with its own test file; this one
+// stays the smallest end-to-end proof the layers hang together.
 const DB = new URL('./tmp-test.db', import.meta.url).pathname
 const wipe = () => ['', '-wal', '-shm'].forEach((s) => rmSync(DB + s, { force: true }))
 

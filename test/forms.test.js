@@ -7,6 +7,13 @@ import { formHtml, emitForms } from '../lib/forms.js'
 import { validationMessage, swapFormErrors } from '../assets/septic-forms.js'
 import { prepareDb, createServer } from '../lib/server.js'
 
+// Covers: the form renderer (widgets, prefill, ref-select options and their
+// read-rule gate, the slug pattern, checkbox 0/1 pairs), emitForms, the pure
+// `validationMessage` helper, and the client `swapFormErrors` status gate.
+// Deliberately not covered: the DOM behaviour of assets/septic-forms.js
+// (enhance/blur/submit) — it needs a browser, and node:test has no DOM; the edit
+// submit round-trip over HTTP lives in forms-edit.test.js.
+
 // ── unit: the renderer ──────────────────────────────────────────────────────
 
 const posts = parseResource('posts', {

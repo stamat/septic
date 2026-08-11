@@ -6,6 +6,12 @@ import { parseResource } from '../lib/schema.js'
 import { validateAll } from '../lib/validate.js'
 import { hashPassword } from '../lib/auth.js'
 
+// Covers: the edge gaps the happy-path spine doesn't reach — touch fields,
+// datetime storage shapes, composite unique, json round-trip, boolean coercion,
+// and a required field carrying a default across insert vs edit.
+// Deliberately not covered: the ordinary CRUD round-trip (crud.test.js owns it)
+// and the ondelete actions beyond what dogfood pins — those have their own homes.
+
 const DB = new URL('./tmp-gaps.db', import.meta.url).pathname
 const wipe = () => ['', '-wal', '-shm'].forEach((s) => rmSync(DB + s, { force: true }))
 

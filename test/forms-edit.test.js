@@ -4,7 +4,11 @@ import { rmSync } from 'node:fs'
 import { createServer } from '../lib/server.js'
 
 // v0.5: edit forms. Retrieve the prefilled form by GETting the row as a writer;
-// submit as PUT (HTMX) or POST + _method (no JS). Server-owned fields survive.
+// submit as PUT (HTMX) or POST + _method (no JS, body or query). Server-owned
+// fields survive; checkbox 0/1 pairs turn a boolean on and off.
+// Deliberately not covered: a true multipart edit submit (a resource with a file
+// field) — the query `_method` path that unblocks it is proven here with a
+// urlencoded body; the multipart body machinery itself lives in media.test.js.
 const DB = new URL('./tmp-edit.db', import.meta.url).pathname
 const wipe = () => ['', '-wal', '-shm'].forEach((s) => rmSync(DB + s, { force: true }))
 

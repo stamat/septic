@@ -70,6 +70,17 @@ test('touch field (updated = now!) is set on insert and re-set on update, never 
   assert.equal(upd.created, undefined)                       // created (= now) is NOT touched on edit
 })
 
+test('a required field with a default is not "required-missing" on an edit', () => {
+  const r = parseResource('e', { fields: { title: 'string required', at: 'datetime required = now' } })
+  const insert = validateAll(r, { title: 'x' })
+  assert.ok(insert.data.at, 'insert still fills the default')
+  assert.deepEqual(insert.errors, {})
+  const edit = validateAll(r, { title: 'y' }, { insert: false })
+  assert.deepEqual(edit.errors, {}, 'the defaulted field left out of the form does not block the edit')
+  const cleared = validateAll(r, {}, { insert: false })
+  assert.equal(cleared.errors.title, '"title" is required', 'a required field with no default still errors')
+})
+
 test('a datetime is stored in one shape whatever shape the client sent', () => {
   const posts = parseResource('posts', config.resources.posts)
   const sql = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/

@@ -61,8 +61,21 @@ export function enhance(form) {
 
 const enhanceAll = (root = document) => root.querySelectorAll?.('form.septic-form').forEach(enhance)
 
+// The server answers a failed submit with the form re-rendered at its error
+// status (422 validation, 409 conflict, 400 nothing-to-update). Stock htmx
+// treats 4xx as an error and swaps nothing, so those re-renders would be
+// invisible — opt them in, and mark them handled so htmx doesn't also log them.
+const SWAP_STATUSES = new Set([400, 409, 422])
+export function swapFormErrors(ev) {
+  if (SWAP_STATUSES.has(ev.detail.xhr.status)) {
+    ev.detail.shouldSwap = true
+    ev.detail.isError = false
+  }
+}
+
 if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => enhanceAll())
   // HTMX swaps in a fresh form (e.g. server-side errors) — re-enhance it.
   document.body?.addEventListener('htmx:afterSwap', (ev) => enhanceAll(ev.target))
+  document.body?.addEventListener('htmx:beforeSwap', swapFormErrors)
 }

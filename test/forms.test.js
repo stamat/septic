@@ -4,7 +4,7 @@ import { rmSync, readFileSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { parseResource } from '../lib/schema.js'
 import { formHtml, emitForms } from '../lib/forms.js'
-import { validationMessage } from '../assets/septic-forms.js'
+import { validationMessage, swapFormErrors } from '../assets/septic-forms.js'
 import { prepareDb, createServer } from '../lib/server.js'
 
 // ── unit: the renderer ──────────────────────────────────────────────────────
@@ -61,6 +61,15 @@ test('validationMessage maps native validity → a message (no rules duplicated)
   assert.match(validationMessage({ typeMismatch: true }, { label: 'Email' }), /not valid/)
   assert.match(validationMessage({ patternMismatch: true }, { label: 'Slug' }), /right format/)
   assert.equal(validationMessage({}), 'Please fix this field')
+})
+
+test('swapFormErrors opts a 4xx form re-render into the swap; leaves other statuses alone', () => {
+  const ev = (status) => ({ detail: { xhr: { status }, shouldSwap: false, isError: true } })
+  const e422 = ev(422); swapFormErrors(e422)
+  assert.equal(e422.detail.shouldSwap, true)
+  assert.equal(e422.detail.isError, false)
+  const e500 = ev(500); swapFormErrors(e500)
+  assert.equal(e500.detail.shouldSwap, false) // a real server error is not a form re-render
 })
 
 test('re-render prefills submitted values and shows errors', () => {

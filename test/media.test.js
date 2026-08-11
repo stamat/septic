@@ -98,6 +98,13 @@ test('a harmless extension is kept', async() => {
   assert.match(row.doc, /\.txt$/)
 })
 
+test('an unexpected upload field is mapped to a 400, not a 500', async() => {
+  const fd = new FormData()
+  fd.append('nope', new Blob(['x'], { type: 'text/plain' }), 'x.txt')
+  const res = await fetch(`${base}/api/photos`, { method: 'POST', body: fd })
+  assert.equal(res.status, 400)
+})
+
 test('a file that is not the image its extension claims is a 422, not a 500', async() => {
   const fd = new FormData()
   fd.append('alt', 'x')

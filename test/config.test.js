@@ -73,3 +73,10 @@ test('the notify block survives loading — a config key the server reads must r
   const loaded = loadConfig(dir)
   assert.equal(loaded.notify?.url, 'https://hook.example/x', 'loadConfig dropped the notify block on the floor')
 })
+
+test('media.dir resolves against the config file, not the launch directory', () => {
+  const dir = write({ septic: { db: 'x.db', resources: {}, media: { dir: 'up', url: '/files' } } })
+  const loaded = loadConfig(dir)
+  assert.equal(loaded.media.dir, path.join(dir, 'up'), 'the upload dir must be anchored to the config, like dbPath')
+  assert.equal(loaded.media.url, '/files', 'the public URL path is left alone')
+})

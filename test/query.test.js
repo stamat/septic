@@ -18,6 +18,11 @@ const config = {
       methods: ['GET', 'POST'],
       access: { read: 'public', write: 'public' },
       fields: { title: 'string required', status: 'enum(draft,published) = draft', author: 'ref:authors' }
+    },
+    notes: {
+      methods: ['GET', 'POST'],
+      access: { read: 'public', write: 'public' },
+      fields: { title: 'string required', pinned: 'boolean = false' }
     }
   }
 }
@@ -37,6 +42,8 @@ before(async() => {
   await make('/api/posts', { title: 'Alpha', status: 'published', author: ada.id })
   await make('/api/posts', { title: 'Beta', status: 'draft', author: ada.id })
   await make('/api/posts', { title: 'Gamma', status: 'published', author: ada.id })
+  await make('/api/notes', { title: 'Pinned', pinned: true })
+  await make('/api/notes', { title: 'Loose', pinned: false })
 })
 after(() => { server?.close(); db?.close(); wipe() })
 
@@ -50,6 +57,18 @@ test('unknown query params are ignored, not errors', async() => {
   const res = await fetch(at('/api/posts?utm_source=x&nope=1'))
   assert.equal(res.status, 200)
   assert.equal((await res.json()).length, 3)
+})
+
+test('a boolean filter matches the stored integer (?pinned=true), not the string "true"', async() => {
+  const on = await get('/api/notes?pinned=true')
+  assert.deepEqual(on.map((r) => r.title), ['Pinned'])
+  const off = await get('/api/notes?pinned=false')
+  assert.deepEqual(off.map((r) => r.title), ['Loose'])
+})
+
+test('a repeated filter key is a 422, not a bind-error 500', async() => {
+  const res = await fetch(at('/api/posts?status=published&status=draft'))
+  assert.equal(res.status, 422)
 })
 
 test('sort + order', async() => {

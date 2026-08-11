@@ -18,6 +18,7 @@ const config = {
   media: { dir: UP, url: '/uploads', sizes: [8] },
   resources: {
     photos: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { alt: 'string', file: 'image' } },
+    avatars: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { alt: 'string required', file: 'image' } },
     attachments: { methods: ['GET', 'POST'], access: { read: 'public', write: 'public' }, fields: { doc: 'file' } }
   }
 }
@@ -95,6 +96,25 @@ test('a harmless extension is kept', async() => {
   const res = await fetch(`${base}/api/attachments`, { method: 'POST', body: fd })
   const row = await res.json()
   assert.match(row.doc, /\.txt$/)
+})
+
+test('a file that is not the image its extension claims is a 422, not a 500', async() => {
+  const fd = new FormData()
+  fd.append('alt', 'x')
+  fd.append('file', new Blob(['this is not a png'], { type: 'image/png' }), 'fake.png')
+  const res = await fetch(`${base}/api/avatars`, { method: 'POST', body: fd })
+  assert.equal(res.status, 422)
+})
+
+test('a valid upload rejected by validation leaves no orphan file on disk', async() => {
+  const png = await sharp({ create: { width: 16, height: 16, channels: 3, background: { r: 4, g: 5, b: 6 } } }).png().toBuffer()
+  const before = readdirSync(UP).length
+  const fd = new FormData()
+  // alt is required and omitted, so the image saves then the insert fails 422
+  fd.append('file', new Blob([png], { type: 'image/png' }), 'orphan.png')
+  const res = await fetch(`${base}/api/avatars`, { method: 'POST', body: fd })
+  assert.equal(res.status, 422)
+  assert.equal(readdirSync(UP).length, before, 'the saved original and its variant were rolled back')
 })
 
 test('an absolute media.url survives — its scheme slashes are not collapsed', async() => {

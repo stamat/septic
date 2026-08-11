@@ -107,6 +107,12 @@ test('expand on a single row', async() => {
   assert.equal(one.author.name, 'Ada')
 })
 
+test('expand over a whole page resolves every row (shared ref, one batched query)', async() => {
+  const rows = await get('/api/posts?expand=author&limit=200')
+  assert.equal(rows.length, 3)
+  assert.ok(rows.every((r) => r.author?.name === 'Ada'), 'all three posts share Ada and all expand')
+})
+
 test('allows(): array of roles, admin superuser, public', () => {
   assert.equal(allows(null, 'public'), true)
   assert.equal(allows(null, ['editor', 'admin']), false)

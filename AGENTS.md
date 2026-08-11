@@ -18,9 +18,9 @@ node bin/septic.js build   # DB rows → poops markup → static site (the bridg
 ## Layout
 
 - `lib/` — source of truth. `schema.js` holds the **field DSL** parser; its
-  output descriptor is read by *both* the DB layer (`db.js`, `crud.js`) and the
-  validator (`validate.js`) — change the grammar in one place, never diverge
-  the two.
+  output descriptor is read by *both* the schema/DDL layer (`schema.js` itself)
+  and the data-and-validation layer (`data.js`, `validate.js`) — change the
+  grammar in one place, never diverge them.
 - `bin/septic.js` — CLI.
 - `test/` — `node:test`; `test/crud.test.js` is the roundtrip spec.
 - No build step: the library ships as source.
@@ -76,7 +76,9 @@ node bin/septic.js build   # DB rows → poops markup → static site (the bridg
   field. Create keeps `insert: true`. Get this wrong and every edit silently
   stamps `created` to now.
 - No-JS edits reach PUT via a `_method` override middleware in `server.js`
-  (POST + hidden `_method=PUT`). HTMX sends the real verb and skips it.
+  (POST + hidden `_method=PUT`, or `?_method=PUT` on the action so a multipart
+  form works, whose body the override can't read). HTMX sends the real verb and
+  skips it.
 - Every SQL identifier from a query param (filter column, sort column) is checked
-  against the `cols` allow-list in `crud.js` before it touches SQL; values are
-  always bound. Never build a column name from input without that check.
+  against the `cols` allow-list in the store (`data.js`) before it touches SQL;
+  values are always bound. Never build a column name from input without that check.

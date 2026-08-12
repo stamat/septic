@@ -9,8 +9,12 @@ and auth. It exists to **share poops's config and feed its static build** —
 not to compete with PocketBase or Supabase on features. It stays deliberately
 small and Node-native, with no dragged binaries. CRUD, auth and validation are
 commodities here; the value is the poops tie-in. Features that grow septic into
-a general-purpose BaaS (realtime, an admin UI, a plugin system) do not have a
-home here.
+a general-purpose BaaS — realtime, a plugin system, an admin *application* (a
+client-side dashboard with its own state and build) — do not have a home here.
+The server-rendered HTML that already ships is the boundary, not a breach of it:
+a browser allowed to write a resource gets its existing REST routes back as a
+form and a table, no app and no new endpoint — content negotiation, not a
+dashboard.
 
 ## Getting set up
 

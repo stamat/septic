@@ -25,6 +25,44 @@ the extension itself, so that asked for `post.html.html` and nothing rendered.
 The blog how-to's layout would not have worked even with the name fixed: it
 printed `{{ content }}`, which is not a variable.
 
+Then a full review pass over `lib/`, and the holes it turned up: an XSS in the
+re-rendered edit form, an upload buffered before the auth check, a ref-select
+that listed rows a read would have denied, a login whose timing told you which
+emails existed. The correctness bugs beside them — a boolean filter that matched
+nothing, a datetime that shifted by the server's offset on every edit, a
+multipart edit that 404'd without JavaScript — and the duplication the pass let
+us delete.
+
+### Changed
+
+- **A boolean filter matches the stored value.** `?published=true` is coerced to
+  the stored `0`/`1` instead of comparing the string `'true'`, which matched
+  nothing and told you so with an empty list. A non-scalar filter (a repeated or
+  bracketed query key like `?status=a&status=b`) is now a `422`, not the
+  bind-error `500` it used to raise.
+- **A checkbox posting the browser default `on` is stored checked.** The
+  validator and the form renderer now share one truth table
+  (`true`/`1`/`'1'`/`'true'`/`'on'`, last value of the hidden-`0` pair wins), so
+  a plain checkbox and an error re-render can no longer disagree.
+- **A naive datetime is read as UTC.** A value with no offset — the storage shape
+  and what `datetime-local` posts — is stored as UTC, the app timezone, as
+  Rails, Django and Laravel default. A value read from the database now
+  round-trips through the edit form unchanged instead of shifting by the server's
+  timezone on every save; an explicit offset (`…Z`, `…+02:00`) is honoured.
+- **A required field with a default no longer blocks its edit form.** A
+  `datetime required = now` is server-owned and left off the form, but validated
+  as "required" on every edit and could never be saved. A field with a default is
+  now never "required-missing".
+- **`_method=PUT` works for a multipart edit form.** The override is read from the
+  query too, since the body parsers never see a multipart body (multer parses it
+  later) — so a no-JS edit of a resource with a file or image field reaches `PUT`
+  instead of `404`.
+- **`media.dir` resolves against the config file, not the launch directory** —
+  like `dbPath` already did, so where the process starts can't move where
+  uploads land and are served from. `media.url` stays a public URL path.
+- **`auth.secureCookies`** — the session cookie gains the `Secure` flag when set,
+  and defaults on under `NODE_ENV=production`.
+
 ### Fixed
 
 - **`layout` takes the name without an extension.** `"layout": "post"`
@@ -42,6 +80,51 @@ printed `{{ content }}`, which is not a variable.
   no `methods` entry; only the README said so.
 - **Two documented defaults that were missing.** `?limit=` defaults to 50 before
   the 200 cap, and form generation omits `= now!` fields as well as `= now`.
+- **HTMX shows a failed submit.** Stock htmx swaps nothing on a 4xx, so the
+  `422`/`409`/`400` form re-render the server sends back was invisible — the
+  client script now swaps it in.
+- **A bad upload is a `422`, not a `500`, and leaves no orphan file.** A file that
+  is not the image its extension claims maps to a field error instead of a bare
+  crash; a valid upload the write then rejects is rolled back off disk. multer's
+  own limits (oversized, unexpected field) map to `413`/`400` through a new error
+  middleware rather than the default `500` page.
+- **An absolute `media.url` keeps its `//`.** Joining the URL base and the stored
+  name no longer collapses `https://cdn/…` to `https:/cdn/…`.
+- **Only `now!` marks a touch field.** A literal default that merely ends in `!`
+  (`"string = hi!"`) keeps its value instead of being re-stamped with a timestamp
+  on every write.
+
+### Removed
+
+- **Dead exports.** `jsonFields`, and the `export` keyword on helpers used only
+  inside their module (`hydrateRow`, `constraintError`, `stripUnwritable`,
+  `loginHtml`, `EMAIL_RE`) — none were re-exported from `index.js`, so the
+  package surface is unchanged.
+
+### Security
+
+- **The edit form escapes its action URL.** On the error re-render, the row id
+  (raw `req.params.id`, which Express percent-decodes) reached the `hx-put` and
+  `action` attributes unescaped, so a crafted id could close the attribute and
+  inject markup — reflected XSS. Escaped at the boundary like every other
+  interpolation in the file.
+- **Write access is checked before the upload is buffered.** `multer` ran before
+  the write guard, so an anonymous request's multipart body — up to
+  `media.maxBytes`, 10 MB by default — was read into memory before the `401`.
+  Reordered so the guard answers first.
+- **A ref-select no longer leaks rows past the target's read rule.** The `<option>`
+  list for a `ref:` field is gated on the referenced resource's `access.read` —
+  the same gate `expand` applies — and only `id` plus the label column leave the
+  database, bounded to 1000 rows. At build time (anonymous) a ref into a
+  non-public table renders no options rather than baking private labels into a
+  public partial.
+- **A `next=` redirect cannot be aimed off-site with a backslash.** `safeNext`
+  blocked `//host` but not `/\host`, which browsers normalise to `//host`. Now
+  rejected.
+- **Login timing no longer enumerates accounts.** An unknown email is verified
+  against a dummy hash, so a missing account and a wrong password cost the same;
+  the password is also hashed off the event loop, so a burst of logins no longer
+  serialises every concurrent request.
 
 ## [3.2.0] - 2026-08-07 — the walls around an MVP
 

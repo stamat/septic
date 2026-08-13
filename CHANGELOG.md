@@ -17,7 +17,9 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased] — blank means blank
+## [Unreleased]
+
+## [4.0.0] - 2026-08-13 — blank means blank
 
 An edit form could not clear a field. You emptied an input, saved, and got a
 `200` back with the old value still on the row — no error, nothing in the log,

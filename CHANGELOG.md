@@ -94,6 +94,13 @@ blog how-to's layout would not have worked even with the name fixed: it printed
 - **Only `now!` marks a touch field.** A literal default that merely ends in `!`
   (`"string = hi!"`) keeps its value instead of being re-stamped with a timestamp
   on every write.
+- **The docs now say that `unique` does not survive being added later.** Nothing
+  changed in the code: a `unique` field added to a table that already exists comes
+  in through `ALTER TABLE ADD COLUMN`, which SQLite forbids from carrying the
+  constraint, and no layer above the database enforces uniqueness — so it accepts
+  duplicates where the same config on a fresh database returns `409`. That was
+  true and unwritten; the config reference states it, and a test pins both halves
+  so it cannot quietly change.
 
 ### Removed
 

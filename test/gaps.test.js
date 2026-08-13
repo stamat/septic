@@ -8,7 +8,9 @@ import { hashPassword } from '../lib/auth.js'
 
 // Covers: the edge gaps the happy-path spine doesn't reach — touch fields,
 // datetime storage shapes, composite unique, json round-trip, boolean coercion,
-// and a required field carrying a default across insert vs edit.
+// a required field carrying a default across insert vs edit, and the limits of
+// boot-time schema reconciliation (what an added or removed field does to a
+// table that already has rows).
 // Deliberately not covered: the ordinary CRUD round-trip (crud.test.js owns it)
 // and the ondelete actions beyond what dogfood pins — those have their own homes.
 
@@ -201,4 +203,31 @@ test('a column no field declares warns as drift, keeps its data, and auth-owned 
   assert.ok(warned.some((w) => w.includes('"mood"') && w.includes('no field declares')), `drift went unnamed: ${warned.join(' | ')}`)
   assert.ok(!warned.some((w) => w.includes('password_hash')), 'an auth-owned users column warned as drift')
   assert.equal(row.mood, 'grim', 'the undeclared column lost its data')
+})
+
+// Pins a documented limit rather than a guarantee: uniqueness has no validator
+// behind it (validate.js never mentions it; data.js only translates SQLite's
+// error into a 409), so whatever the column was born with is the whole rule.
+test('"unique" holds on a fresh table and is silently absent on a grown one — the same config, two databases', () => {
+  const declare = (fields) => ({ dbPath: DB, auth: {}, resources: { notes: { fields } } })
+  const twice = (d) => {
+    const ins = d.prepare("INSERT INTO notes (text, code) VALUES ('a', 'dup')")
+    ins.run()
+    return ins
+  }
+
+  wipe()
+  const fresh = prepareDb(declare({ text: 'string', code: 'string unique' }))
+  const insFresh = twice(fresh.db)
+  assert.throws(() => insFresh.run(), /UNIQUE/, 'a column born inside CREATE TABLE must carry its constraint')
+  fresh.db.close()
+
+  wipe()
+  // Same field, arriving after the table exists: ensureColumns can only reach it
+  // through ALTER TABLE ADD COLUMN, which SQLite forbids from carrying UNIQUE.
+  prepareDb(declare({ text: 'string' })).db.close()
+  const grown = prepareDb(declare({ text: 'string', code: 'string unique' }))
+  const insGrown = twice(grown.db)
+  assert.doesNotThrow(() => insGrown.run(), 'the duplicate was rejected — if ALTER now carries UNIQUE, docs/src/markup/docs/config.md is the thing to fix, not this test')
+  grown.db.close(); wipe()
 })

@@ -15,7 +15,7 @@ order: 3
 - **flags:** `required` `unique` `ondelete=cascade|setnull|restrict` (ref only)
 - **default:** `= value` — `= now` fills a `datetime` at insert; `= now!` also re-stamps it on every update (an `updated_at`)
 
-Changing fields against a live database: an added field becomes a column in place; a removed or renamed field leaves its old column behind, named in a startup warning and never dropped — a rename still needs a real migration. `boolean` is stored as SQLite `0`/`1` and comes back from the API as `true`/`false`. A `datetime` is stored and read as UTC: a value with no offset (what a `datetime-local` input posts) is taken as UTC so it round-trips unchanged, and an explicit offset (`…Z`, `…+02:00`) is honoured.
+Changing fields against a live database: an added field becomes a column in place, but nullable and **without its `unique` constraint** — SQLite's `ALTER TABLE ADD COLUMN` cannot carry one, and nothing above the database enforces uniqueness, so a `unique` field added to a table that already exists accepts duplicates where the same config on a fresh database returns `409`. A removed or renamed field leaves its old column behind, named in a startup warning and never dropped — a rename still needs a real migration: hand-written SQL, run against the database outside septic, the way [pooppress owns its own](dogfood.html). `boolean` is stored as SQLite `0`/`1` and comes back from the API as `true`/`false`. A `datetime` is stored and read as UTC: a value with no offset (what a `datetime-local` input posts) is taken as UTC so it round-trips unchanged, and an explicit offset (`…Z`, `…+02:00`) is honoured.
 
 ## Resource options
 

@@ -89,8 +89,26 @@ store.posts.create({ title: 'Hello', slug: 'hello' }, { user })
 | `get(id, { user, expand })` | throws `NotFoundError` rather than returning null |
 | `raw(id, { user })` | the stored row, undeclared columns and all — for a caller that owns the table and needs a column the config does not declare |
 | `create(data, { user })` | returns the new row, shaped |
-| `update(id, data, { user, partial })` | `partial: true` touches only what it was given; an explicit `null` clears a nullable field (a required one still errors), `''` reads as absence |
+| `update(id, data, { user, partial })` | `partial: true` touches only what it was given, clearing on an explicit `null` and reading `''` as an absence. Without it the call is a **whole-row edit**: what arrives empty is cleared, and every `required` field with no default must be present |
 | `remove(id, { user })` | `true`, or `NotFoundError` |
+
+A whole-row update is what an HTML form posts — every field it drew, so a blank
+input is a person emptying that column on purpose. What "empty" writes follows
+the declared type:
+
+| | omitted key | `null` | `""` |
+|---|---|---|---|
+| whole-row (no `partial`) | untouched — but a `required` field with no default must be present | `NULL` | `""` for `string`/`text`, `NULL` for the rest |
+| `partial: true` | untouched | `NULL` | untouched |
+
+`""` is a value for the free-text types and only an absence for the others,
+which is also what keeps a `NOT NULL DEFAULT ''` column septic did not create
+legal. Two fields refuse the blank clear: a `file`/`image`, because an untouched
+file input can post an empty part and dropping the stored upload on that would
+be data loss (an explicit `null` still drops one), and a `required` field with a
+default. Editing one column from a host application means sending the stored row
+with the change on top — `store.media.update(id, { ...row, alt_text: '' }, { user })`
+— or reaching for `partial` and clearing with `null`.
 
 **The rules are the same ones the API applies**, because the router calls exactly these methods: `access.read`/`access.write` per call, `fieldAccess` per field (an unwritable field is dropped, so the rest of the edit survives), reads shaped to the declared fields — an undeclared column stays in the database — and `expand` obeying the referenced resource's own read rule.
 

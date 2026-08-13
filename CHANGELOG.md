@@ -17,24 +17,45 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased]
+## [Unreleased] — blank means blank
+
+An edit form could not clear a field. You emptied an input, saved, and got a
+`200` back with the old value still on the row — no error, nothing in the log,
+just a write that quietly did not happen. septic's own negotiated admin had it,
+which is the kind of bug that survives a test suite because nobody writes the
+test for a thing they assume works.
+
+Fixing it changes what a whole-row edit means, and that is a major: a client
+posting a full body now clears the columns it left empty, where before those
+writes were dropped. Read **Changed** before upgrading.
+
+### Changed
+
+- **BREAKING — a whole-row update clears what arrives empty.** A whole-row edit
+  is an HTML form post, or `store.update` called without `partial`. In that
+  mode a field arriving as `""` now writes `""` for `string` and `text`, where
+  an empty string is a value in its own right, and `NULL` for every other type,
+  where it is only an absence; a field arriving as `null` writes `NULL`
+  whatever the type. Previously all of these were dropped and the stored value
+  stayed. **If a caller posts a full body carrying `""` or `null` for fields it
+  did not mean to touch, those columns now clear** — omit the keys you are not
+  editing, or use `PATCH`. Unaffected: JSON `PUT` and `PATCH`, which stay
+  partial and still clear only on an explicit `null`; any resource with no
+  `build.forms` block, whose routes never take the whole-row path; and an
+  omitted key, which is left alone as it always was.
+- A whole-row update must carry every `required` field that has no default —
+  the same rule an arriving-empty one has always followed, now reachable from
+  the library. A host editing one column sends the stored row with its change
+  on top (`store.media.update(id, { ...row, alt_text: '' }, { user })`) or uses
+  `partial`.
 
 ### Fixed
 
-- **An edit form could not clear a field.** Emptying an optional input and
-  saving returned `200` and the old value — the clear was read as "the user
-  left this alone" and silently dropped. A whole-row edit (an HTML form, or
-  `store.update` without `partial`) now clears such a field: `""` for `string`
-  and `text`, where an empty string is a value in its own right, and `NULL` for
-  every other type, where it is only an absence. An explicit `null` writes
-  `NULL` whatever the type. An omitted key is still left alone, and a JSON
-  `PUT`/`PATCH` is unchanged — only the keys it carries, and `null` to clear.
-  Two fields keep their value against a blank because the form
-  cannot mean otherwise: a `file`/`image` (an untouched file input can post an
-  empty part, and clearing on that would drop the stored upload — an explicit
-  `null` still drops one) and a required field with a default. **If your client
-  posts a full body with `""` or `null` for fields it did not mean to touch,
-  those columns now clear** — omit the keys you are not editing, or use `PATCH`.
+- Two fields keep their value against a blank, because a form cannot mean
+  otherwise: a `file`/`image`, since an untouched file input can post an empty
+  part and clearing on that would drop the stored upload (an explicit `null`
+  still drops one), and a `required` field with a default, which would
+  otherwise make every edit form unsavable.
 - Clearing a column the database declares `NOT NULL` where the type still nulls
   — a `ref:` or an `integer` — is a `422` naming the field instead of a `500`
   about someone else's DDL. Text columns declared `NOT NULL DEFAULT ''`, which

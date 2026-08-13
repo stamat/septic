@@ -39,6 +39,8 @@ The HTMX error row needs `assets/septic-forms.js` (see [Progressive validation](
 
 `GET /api/:resource/:id` as a writer wanting HTML returns a prefilled edit form (PUT via HTMX `hx-put`, or POST + `_method=PUT` for no-JS). Editing never re-applies defaults, so `created` survives.
 
+The form posts every field it drew, so **emptying an input clears that column** — `""` for a `string` or `text`, `NULL` for every other type. Clearing a required field still errors, and a `file`/`image` keeps its stored upload, because an untouched file input can post an empty part. A JSON `PUT`/`PATCH` is the other contract: only the keys it carries, cleared with an explicit `null`. [The data layer](index#the-data-layer) has both contracts side by side.
+
 ### The negotiated admin
 
 One level up, the same trade: `GET /api/:resource` as a writer wanting HTML is a **table** — each id linking its edit form, prev/next when a page fills, the create form underneath. An API client on the same URL keeps its JSON array. No separate admin app, no extra route.

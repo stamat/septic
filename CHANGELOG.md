@@ -17,7 +17,9 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased] — the walls had holes
+## [Unreleased]
+
+## [3.3.0] - 2026-08-13 — the walls had holes
 
 3.2.0 built the walls around the MVP; this pass read them, and found the holes.
 An XSS in the re-rendered edit form. An upload buffered into memory before the

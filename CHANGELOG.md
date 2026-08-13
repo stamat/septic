@@ -17,21 +17,22 @@ in the same commit as the version bump, and the entry becomes the body of the
 GitHub release verbatim. A title written as `## [Unreleased] — the headline`
 carries over into the released heading.
 
-## [Unreleased] — the bridge example never built
+## [Unreleased] — the walls had holes
 
-Every place the poops bridge was documented — README, the Forms page, the blog
-how-to, `example/poops.json` — named the layout as `"post.html"`. poops appends
-the extension itself, so that asked for `post.html.html` and nothing rendered.
-The blog how-to's layout would not have worked even with the name fixed: it
-printed `{{ content }}`, which is not a variable.
+3.2.0 built the walls around the MVP; this pass read them, and found the holes.
+An XSS in the re-rendered edit form. An upload buffered into memory before the
+auth check. A ref-select that listed rows a read would have denied. A login
+whose response time told you which emails existed. The correctness bugs beside
+them — a boolean filter that matched nothing, a datetime that shifted by the
+server's offset on every edit, a multipart edit that 404'd without JavaScript —
+and the duplication the pass let us delete.
 
-Then a full review pass over `lib/`, and the holes it turned up: an XSS in the
-re-rendered edit form, an upload buffered before the auth check, a ref-select
-that listed rows a read would have denied, a login whose timing told you which
-emails existed. The correctness bugs beside them — a boolean filter that matched
-nothing, a datetime that shifted by the server's offset on every edit, a
-multipart edit that 404'd without JavaScript — and the duplication the pass let
-us delete.
+The bridge example that never built came out of the same read. Every place the
+poops bridge was documented — README, the Forms page, the blog how-to,
+`example/poops.json` — named the layout as `"post.html"`. poops appends the
+extension itself, so that asked for `post.html.html` and nothing rendered. The
+blog how-to's layout would not have worked even with the name fixed: it printed
+`{{ content }}`, which is not a variable.
 
 ### Changed
 

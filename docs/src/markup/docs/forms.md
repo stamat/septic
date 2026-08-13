@@ -23,7 +23,7 @@ A `build.forms` block emits an HTML `<form>` per resource, from the same field D
 }
 ```
 
-Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:`→`<select>` from the DB, `email`→`type=email`, `image`→file input. `id` is omitted, and so is any field defaulting to `now` — `= now` and `= now!` alike, since both are server-owned. A `hints.<field>.include` puts one back; `hints.<field>.exclude` takes any other field out.
+Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:`→`<select>` built from the referenced table (only rows the viewer may read, per that resource's `access.read`, and bounded), `email`→`type=email`, `image`→file input. `id` is omitted, and so is any field defaulting to `now` — `= now` and `= now!` alike, since both are server-owned. A `hints.<field>.include` puts one back; `hints.<field>.exclude` takes any other field out.
 
 **They work.** The create/update routes content-negotiate:
 
@@ -32,6 +32,8 @@ Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:`→
 | HTMX | `HX-Redirect`, or a "Saved" fragment | `422` + the form re-rendered with errors + values |
 | Browser (no JS) | `303` redirect (Post/Redirect/Get) | `422` + the re-rendered form |
 | API (JSON) | `201` + JSON | `422` + JSON |
+
+The HTMX error row needs `assets/septic-forms.js` (see [Progressive validation](#progressive-validation)): stock htmx swaps nothing on a `4xx`, so the re-rendered form shows only with the script loaded.
 
 ### Editing
 
@@ -53,7 +55,7 @@ A successful HTTP write POSTs `{event, resource, row}` to the URL — "email me 
 
 ### Progressive validation
 
-Native HTML5 validation fires from the emitted attributes with no JS. Include `assets/septic-forms.js` and those same native checks drive styled inline messages — no rules duplicated. The server (`validate.js`) stays the authority.
+Native HTML5 validation fires from the emitted attributes with no JS. Include `assets/septic-forms.js` and those same native checks drive styled inline messages — no rules duplicated. It also opts the server's errors back into HTMX: stock htmx swaps nothing on a `4xx`, so the `422`/`409` re-rendered form (the HTMX error column above) is shown only with the script loaded. The server (`validate.js`) stays the authority.
 
 ## The poops bridge
 

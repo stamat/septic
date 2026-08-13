@@ -2,13 +2,23 @@
 
 Config-driven backend for the [poops](https://github.com/stamat/poops) ecosystem. One `poops.json`, a `septic` block → SQLite schema + REST CRUD + auth. The backend twin of the poops frontend. (A septic tank is the backend that stores and processes what poops produces.)
 
-> **Status.** Stable — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. No migrations (columns are added in place, and a column no field declares warns as drift), no realtime, no admin dashboard (the negotiated list and edit forms below are as far as that goes), no plugin system; [CHANGELOG.md](CHANGELOG.md) has the current version and the limits, [CONTRIBUTING.md](CONTRIBUTING.md) says which of them are refusals. Full reference: [stamat.info/septic](https://stamat.info/septic/).
+> **Status.** Stable — schema, CRUD, validation, auth, media, relations, forms and the poops bridge are all in, proven against pooppress's own committed migration ([DOGFOOD.md](docs/DOGFOOD.md)). Node-native, no dragged binaries. No migrations (columns are added in place, and a column no field declares warns as drift), no realtime, no admin dashboard (the negotiated list and edit forms below are as far as that goes), no plugin system, no Postgres or MySQL (SQLite only, on purpose — [why](#why-it-exists)); [CHANGELOG.md](CHANGELOG.md) has the current version and the limits, [CONTRIBUTING.md](CONTRIBUTING.md) says which of them are refusals. Full reference: [stamat.info/septic](https://stamat.info/septic/).
 
 ## Why it exists
 
 Not to compete with PocketBase/Supabase/Payload — it can't and shouldn't. Its one moat: it shares `poops.json` and emits the poops static-site markup bridge. Everything else (CRUD, auth, validation) is commodity, kept deliberately minimal.
 
 Three organs read that one config: [poops](https://github.com/stamat/poops) compiles the pages, septic serves the data, [laxative](https://github.com/stamat/laxative) runs both on one origin so a generated form posts to the host that rendered it. `septic serve` mounts `/api` and `/uploads` only — it never serves the built site, and that division is deliberate.
+
+**SQLite only, and that is a refusal rather than a gap.** The handle septic passes around *is* a synchronous better-sqlite3 handle, and `prepareDb` hands it to you; Postgres and MySQL drivers are async, so an adapter means an async rewrite of the data layer, a break of that public handle, and three SQL dialects under maintenance forever — paid to arrive where [PostgREST](https://postgrest.org/) already is. The bridge below is single-machine and single-author anyway, which is SQLite's home ground. Want another engine? Use one of these; on this they beat any adapter septic could grow:
+
+| You want | Use | Why it wins here |
+|---|---|---|
+| A REST API over a Postgres schema you already have | [PostgREST](https://postgrest.org/) | Introspects the schema, delegates auth to Postgres RLS, a decade in production |
+| That plus hosting, storage and a dashboard | [Supabase](https://supabase.com/) | PostgREST underneath, with a company around it |
+| Postgres, MySQL, SQLite, MSSQL — and an admin app | [Directus](https://directus.com/features/supported-sql-databases) | Points at a database you already have, no migration |
+| One binary, SQLite, no Node at all | [PocketBase](https://pocketbase.io/) | The [same refusal for the same reasons](https://github.com/pocketbase/pocketbase/discussions/14), in a single file |
+| A static poops site built from the same rows | septic | Nothing else reads `poops.json` |
 
 ## Config
 

@@ -16,6 +16,15 @@ a browser allowed to write a resource gets its existing REST routes back as a
 form and a table, no app and no new endpoint — content negotiation, not a
 dashboard.
 
+Other database engines are refused on the same grounds. septic is SQLite-only:
+the handle it threads through `lib/` is a *synchronous* better-sqlite3 one and
+`prepareDb` returns it, so a Postgres or MySQL adapter is an async rewrite of the
+data layer, a break of that public API, and three SQL dialects to keep in step —
+spent to land where [PostgREST](https://postgrest.org/) and
+[Directus](https://directus.com/features/supported-sql-databases) already are.
+The README names them and says when to pick one; a pull request adding an
+adapter will be closed with a link to this paragraph.
+
 ## Getting set up
 
 ```bash

@@ -19,6 +19,28 @@ carries over into the released heading.
 
 ## [Unreleased]
 
+### Fixed
+
+- **An edit form could not clear a field.** Emptying an optional input and
+  saving returned `200` and the old value — the clear was read as "the user
+  left this alone" and silently dropped. A whole-row edit (an HTML form, or
+  `store.update` without `partial`) now clears such a field: `""` for `string`
+  and `text`, where an empty string is a value in its own right, and `NULL` for
+  every other type, where it is only an absence. An explicit `null` writes
+  `NULL` whatever the type. An omitted key is still left alone, and a JSON
+  `PUT`/`PATCH` is unchanged — only the keys it carries, and `null` to clear.
+  Two fields keep their value against a blank because the form
+  cannot mean otherwise: a `file`/`image` (an untouched file input can post an
+  empty part, and clearing on that would drop the stored upload — an explicit
+  `null` still drops one) and a required field with a default. **If your client
+  posts a full body with `""` or `null` for fields it did not mean to touch,
+  those columns now clear** — omit the keys you are not editing, or use `PATCH`.
+- Clearing a column the database declares `NOT NULL` where the type still nulls
+  — a `ref:` or an `integer` — is a `422` naming the field instead of a `500`
+  about someone else's DDL. Text columns declared `NOT NULL DEFAULT ''`, which
+  is what septic finds when it adopts a table it did not create, take the empty
+  string and stay legal.
+
 ## [3.3.0] - 2026-08-13 — the walls had holes
 
 3.2.0 built the walls around the MVP; this pass read them, and found the holes.

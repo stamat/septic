@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { rmSync } from 'node:fs'
 import { createServer } from '../lib/server.js'
 import { createStore, AccessError, NotFoundError } from '../lib/data.js'
+import { openDb } from '../lib/db.js'
 import { ValidationError } from '../lib/validate.js'
 import { parseResources } from '../lib/schema.js'
 
@@ -28,7 +29,9 @@ const resources = {
       title: 'string required',
       slug: 'slug unique',
       status: 'enum(draft,published) = draft',
-      author_id: 'ref:writers'
+      author_id: 'ref:writers',
+      cover: 'image',
+      note: 'text'
     }
   },
   writers: {
@@ -152,6 +155,80 @@ test('null cannot clear a required field', () => {
   const row = posts.create({ title: 'Keeps title', slug: 'keeps-title' }, { user: editor })
   assert.throws(() => posts.update(row.id, { title: null }, { user: editor, partial: true }),
     { name: 'ValidationError' }, 'a required field accepted null')
+})
+
+// The edit form posts every field it drew, so blanking an input is the only way
+// a person can say "clear this" — answering it with the old value and a 200 was
+// the silent lie these three pin shut.
+test('a blank field on a whole-row edit clears it, rather than being taken as untouched', () => {
+  const w = writers.create({ name: 'W' }, { user: editor })
+  const row = posts.create({ title: 'Linked', slug: 'blank-clears', author_id: w.id }, { user: editor })
+  const cleared = posts.update(row.id, { title: 'Linked', slug: 'blank-clears', author_id: '' }, { user: editor })
+  assert.equal(cleared.author_id, null, 'a blanked field kept its old value')
+})
+
+// An empty string is a value for the free-text types and an absence for the
+// rest, so a blanked text field empties and a blanked ref nulls. The NOT NULL
+// DEFAULT '' column below is why it matters beyond tidiness.
+test('a blanked text field is emptied rather than nulled', () => {
+  const row = posts.create({ title: 'Has a note', slug: 'blank-text', note: 'something' }, { user: editor })
+  const cleared = posts.update(row.id, { title: 'Has a note', slug: 'blank-text', note: '' }, { user: editor })
+  assert.equal(cleared.note, '', 'a blanked text field should empty, not null')
+})
+
+test('an explicit null still nulls a text field — it is not the form’s empty input', () => {
+  const row = posts.create({ title: 'Has a note', slug: 'null-text', note: 'something' }, { user: editor })
+  const cleared = posts.update(row.id, { title: 'Has a note', slug: 'null-text', note: null }, { user: editor })
+  assert.equal(cleared.note, null, 'an explicit null was downgraded to an empty string')
+})
+
+// The database septic adopts rather than creates: pooppress's own posts table
+// declares its text columns NOT NULL DEFAULT '', and an editor emptying a post
+// body must not become a constraint failure on a field the config calls
+// optional. This is the case that decided the rule above.
+test('emptying a text column the database declares NOT NULL is a save, not a constraint failure', () => {
+  const ADOPT = new URL('./tmp-adopt.db', import.meta.url).pathname
+  const drop = () => ['', '-wal', '-shm'].forEach((s) => rmSync(ADOPT + s, { force: true }))
+  drop()
+  const boot = openDb(ADOPT)
+  boot.exec("CREATE TABLE pages (id INTEGER PRIMARY KEY AUTOINCREMENT, body TEXT NOT NULL DEFAULT '')")
+  boot.close()
+
+  const spec = { pages: { methods: ['GET', 'PUT'], access: { read: 'public', write: 'public' }, fields: { body: 'text' } } }
+  const adopted = createServer({ dbPath: ADOPT, resources: spec })
+  const pages = createStore(adopted.db, parseResources(spec)).pages
+  const row = pages.create({ body: 'written' }, { user: editor })
+  assert.equal(pages.update(row.id, { body: '' }, { user: editor }).body, '', 'emptying a NOT NULL text column failed')
+  adopted.db.close()
+  drop()
+})
+
+test('a whole-row edit still leaves out what it never sent', () => {
+  const row = posts.create({ title: 'Keeps slug', slug: 'omitted-is-untouched' }, { user: editor })
+  const updated = posts.update(row.id, { title: 'New title' }, { user: editor })
+  assert.equal(updated.slug, 'omitted-is-untouched', 'an omitted field was cleared')
+})
+
+test('an explicit null clears on a whole-row edit too, not only a blank', () => {
+  const w = writers.create({ name: 'W' }, { user: editor })
+  const row = posts.create({ title: 'Linked', slug: 'null-clears-whole', author_id: w.id }, { user: editor })
+  const cleared = posts.update(row.id, { title: 'Linked', slug: 'null-clears-whole', author_id: null }, { user: editor })
+  assert.equal(cleared.author_id, null, 'null was read as untouched on a whole-row edit')
+})
+
+test('an untouched file input cannot clear the upload the row already points at', () => {
+  const cover = JSON.stringify({ path: '/uploads/a.png', name: 'a.png' })
+  const row = posts.create({ title: 'Illustrated', slug: 'keeps-cover', cover }, { user: editor })
+  const saved = posts.update(row.id, { title: 'Illustrated', slug: 'keeps-cover', cover: '' }, { user: editor })
+  assert.equal(saved.cover.path, '/uploads/a.png', 'saving the form deleted the stored upload')
+  const dropped = posts.update(row.id, { title: 'Illustrated', slug: 'keeps-cover', cover: null }, { user: editor })
+  assert.equal(dropped.cover, null, 'an explicit null could not drop an upload')
+})
+
+test('blanking a required field on a whole-row edit errors instead of clearing it', () => {
+  const row = posts.create({ title: 'Has a title', slug: 'required-stays' }, { user: editor })
+  assert.throws(() => posts.update(row.id, { title: '', slug: 'required-stays' }, { user: editor }),
+    { name: 'ValidationError' }, 'a required field was blanked')
 })
 
 test('a duplicate on a unique field is a conflict, not a crash', () => {

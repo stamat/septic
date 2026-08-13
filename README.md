@@ -187,6 +187,19 @@ Field types map to inputs — `slug`→`pattern`, `enum`→`<select>`, `ref:x`�
 
 `GET /api/:resource/:id`, as someone allowed to write it and wanting HTML, returns the row as a **prefilled edit form**. It submits with PUT — HTMX via `hx-put`, or no-JS via `POST` + a hidden `_method=PUT` the server honours. Editing never re-applies defaults, so a `datetime = now` (or any server-owned field) survives; clearing a required field still errors.
 
+A form posts every field it drew, so **emptying an input clears that column** — the edit is the whole row, and a blank is what the person meant. A key the body never carries is left alone, with the one exception the table names:
+
+| | omitted key | `null` | `""` |
+|---|---|---|---|
+| whole-row (an HTML form edit, or `store.update` without `partial`) | untouched — but a `required` field with no default must be present | `NULL` | `""` for `string`/`text`, `NULL` for the rest |
+| JSON `PUT`/`PATCH` (`partial`) | untouched | `NULL` | untouched |
+
+A whole-row edit means what it says: the form carries every field, so a `required` one that never arrives is the same error as one arriving empty. A host application editing a single column through `store.update` sends the stored row with its change on top — `store.media.update(id, { ...row, alt_text: '' }, { user })` — or reaches for `partial` and clears with `null`.
+
+`""` is a value for the free-text types and only an absence for the others, which is why a blanked `text` empties while a blanked `ref:` or `datetime` nulls — and it is what lets septic serve a table it did not create whose text columns are `NOT NULL DEFAULT ''`. On the JSON path `""` stays untouched instead: a form posts it for every input the user merely left empty, while a JSON client sending `""` is more often repeating a body it did not mean to edit — send `null` there to clear.
+
+Two fields refuse the blank clear even on a whole-row edit, because the form cannot mean it: a `file`/`image` keeps its stored upload (an untouched file input can still post an empty part — an explicit `null` drops one), and a required field with a default keeps its value rather than making every edit unsavable. Clearing a column the database declares `NOT NULL` where the type still nulls — a `ref:` or `integer` — is a `422` naming the field, not a 500.
+
 ### The negotiated admin
 
 The same negotiation, one level up: `GET /api/:resource`, as someone allowed to write it and wanting HTML, returns the rows as a **table** — each id linking its edit form, prev/next when a page fills, the create form underneath. An API client on the same URL keeps its JSON array; there is no separate admin app, no route added, no build step.
